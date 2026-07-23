@@ -1,0 +1,4 @@
+appId: ${APP_ID}
+---
+- runFlow: signin.yml
+- runFlow: phase-14-templates-no-launch.yml

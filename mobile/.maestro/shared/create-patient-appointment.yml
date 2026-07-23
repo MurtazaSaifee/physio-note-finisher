@@ -1,0 +1,91 @@
+appId: ${APP_ID}
+---
+- runFlow:
+    label: Sign in
+    file: ../shared/signin.yml
+- tapOn:
+    id: bottom-nav-patients
+- scrollUntilVisible:
+    element:
+      id: patient-list-fullname-input
+    direction: DOWN
+    timeout: 20000
+- assertVisible:
+    id: patient-list-fullname-input
+- evalScript: ${output.patientName = 'Maestro Patient ' + Date.now() + '-' + Math.floor(Math.random() * 1000)}
+- tapOn:
+    id: patient-list-fullname-input
+- inputText: ${output.patientName}
+- back
+- scrollUntilVisible:
+    element:
+      id: patient-list-phone-input
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: patient-list-phone-input
+- inputText: 555-0100
+- scrollUntilVisible:
+    element:
+      id: patient-list-create-patient-button
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: patient-list-create-patient-button
+- scrollUntilVisible:
+    element:
+      id: patient-list-search-input
+    direction: UP
+    timeout: 20000
+- longPressOn:
+    id: patient-list-search-input
+- eraseText: 100
+- inputText: ${output.patientName}
+- tapOn: Search
+- assertVisible:
+    id: patient-list-patient-0-card
+- tapOn:
+    id: patient-list-patient-0-card
+- assertVisible:
+    id: patient-profile-create-appointment-button
+- tapOn:
+    id: patient-profile-create-appointment-button
+- assertVisible:
+    id: new-appointment-create-button
+- tapOn:
+    id: new-appointment-notes-input
+- inputText: Follow-up
+- tapOn: New Appointment
+- scrollUntilVisible:
+    element:
+      id: new-appointment-create-button
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: new-appointment-create-button
+- assertVisible:
+    id: appointment-detail-start-session-button
+- tapOn:
+    id: appointment-detail-copy-clipboard-button
+    optional: true
+- tapOn:
+    id: appointment-detail-start-session-button
+- scrollUntilVisible:
+    element:
+      id: note-save-draft-button
+    direction: DOWN
+    timeout: 20000
+- assertVisible:
+    id: note-save-draft-button
+- tapOn:
+    id: note-save-draft-button
+- scrollUntilVisible:
+    element:
+      text: Draft saved.
+    direction: UP
+    timeout: 20000
+- assertVisible: Draft saved.
+- tapOn:
+    id: bottom-nav-sessions
+- assertVisible:
+    id: dashboard-search-input

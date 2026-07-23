@@ -1,0 +1,23 @@
+appId: ${APP_ID}
+---
+- killApp
+- launchApp:
+    clearState: true
+- runScript: wait-for-auth-bootstrap.js
+- assertVisible:
+    id: signin-submit-button
+- longPressOn:
+    id: signin-email-input
+- eraseText: 100
+- inputText: ${LOGIN_EMAIL}
+- longPressOn:
+    id: signin-password-input
+- eraseText: 100
+- inputText: ${LOGIN_PASSWORD}
+- pressKey: back
+- tapOn:
+    id: signin-submit-button
+    retryTapIfNoChange: true
+- assertVisible: Clinical Dashboard
+- assertVisible:
+    id: bottom-nav-sessions

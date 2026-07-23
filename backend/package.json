@@ -1,0 +1,39 @@
+{
+  "name": "@physio/backend",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "scripts": {
+    "dev": "tsx watch src/index.ts",
+    "start": "tsx src/index.ts",
+    "prisma:generate": "node -e \"const {execFileSync}=require('node:child_process');const env={...process.env,DATABASE_URL:process.env.DATABASE_URL||'postgresql://localhost:5432/postgres'};execFileSync(process.platform==='win32'?'npx.cmd':'npx',['prisma','generate','--config','prisma.config.ts'],{stdio:'inherit',env});\"",
+    "prisma:migrate:deploy": "prisma migrate deploy --config prisma.config.ts",
+    "prisma:seed": "tsx prisma/seed.ts",
+    "lint": "eslint \"src/**/*.ts\" \"prisma/**/*.ts\" \"prisma.config.ts\"",
+    "typecheck": "npm run prisma:generate && node -e \"const fs=require('fs');const cfg=JSON.parse(fs.readFileSync('tsconfig.json','utf8'));if(cfg.extends!=='../tsconfig.base.json'){throw new Error('tsconfig inheritance mismatch');}\" && tsc --noEmit",
+    "test": "npm run prisma:generate && vitest run"
+  },
+  "prisma": {
+    "seed": "tsx prisma/seed.ts"
+  },
+  "dependencies": {
+    "@prisma/adapter-pg": "^7.7.0",
+    "@prisma/client": "^7.7.0",
+    "@types/pdfkit": "^0.17.6",
+    "bcryptjs": "^3.0.3",
+    "dotenv": "^16.6.1",
+    "fastify": "^5.8.5",
+    "jsonwebtoken": "^9.0.3",
+    "pdfkit": "^0.18.0",
+    "zod": "^3.25.76"
+  },
+  "devDependencies": {
+    "@types/bcryptjs": "^2.4.6",
+    "@types/jsonwebtoken": "^9.0.10",
+    "@types/node": "^24.9.0",
+    "prisma": "^7.7.0",
+    "tsx": "^4.19.2",
+    "typescript": "^5.9.3",
+    "vitest": "^3.2.4"
+  }
+}

@@ -1,0 +1,16 @@
+appId: ${APP_ID}
+---
+- launchApp:
+    clearState: true
+- assertVisible:
+    id: signin-submit-button
+- runScript: wait-for-auth-bootstrap.js
+- tapOn:
+    id: signin-forgot-password-button
+    retryTapIfNoChange: true
+- assertVisible:
+    id: forgotpassword-send-button
+- tapOn:
+    id: forgotpassword-back-button
+- assertVisible:
+    id: signin-submit-button

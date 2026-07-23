@@ -1,0 +1,55 @@
+appId: ${APP_ID}
+---
+- runFlow:
+    label: Sign in
+    file: ../shared/signin.yml
+- tapOn:
+    id: bottom-nav-profile
+- assertVisible:
+    id: settings-save-button
+- tapOn:
+    id: settings-firstname-input
+- longPressOn:
+    id: settings-firstname-input
+- eraseText: 100
+- inputText: Mira
+- tapOn:
+    id: settings-lastname-input
+- longPressOn:
+    id: settings-lastname-input
+- eraseText: 100
+- inputText: Patel
+- tapOn:
+    id: settings-save-button
+- assertVisible: Profile updated.
+- scrollUntilVisible:
+    element:
+      id: settings-change-password-button
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: settings-change-password-button
+- assertVisible:
+    id: password-send-code-button
+- tapOn:
+    id: password-back-button
+- scrollUntilVisible:
+    element:
+      id: settings-reminder-2h
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: settings-reminder-2h
+- assertVisible: Reminder timing updated.
+- scrollUntilVisible:
+    element:
+      id: settings-retention-forever
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: settings-retention-forever
+- assertVisible: Retention policy updated.
+- tapOn:
+    id: bottom-nav-sessions
+- assertVisible:
+    id: dashboard-search-input

@@ -1,0 +1,23 @@
+appId: ${APP_ID}
+---
+- runFlow:
+    label: Auth smoke
+    file: ../shared/auth-smoke.yml
+- runFlow:
+    label: Dashboard nav
+    file: ../shared/dashboard-nav.yml
+- runFlow:
+    label: Settings core
+    file: ../shared/settings-core.yml
+- runFlow:
+    label: Staging Google Calendar
+    file: ../shared/settings-staging.yml
+- runFlow:
+    label: Appointment flow
+    file: ../shared/create-patient-appointment.yml
+- runFlow:
+    label: Voice flow
+    file: ../shared/voice-note.yml
+- runFlow:
+    label: Manual note and export flow
+    file: ../shared/manual-note-export.yml

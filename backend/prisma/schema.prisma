@@ -1,0 +1,403 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Clinic {
+  id                       String                   @id @default(cuid())
+  name                     String
+  users                    User[]
+  patients                 Patient[]
+  sessions                 Session[]
+  exportRecords            ExportRecord[]
+  progressNotes            ProgressNote[]
+  customTemplateCategories CustomTemplateCategory[]
+  customTemplates          CustomTemplate[]
+  appointments             Appointment[]
+  patientConsents          PatientConsent[]
+  createdAt                DateTime                 @default(now())
+  updatedAt                DateTime                 @updatedAt
+}
+
+enum PatientSex {
+  female
+  male
+  other
+  prefer_not_to_say
+}
+
+model Patient {
+  id              String           @id @default(cuid())
+  clinicId        String
+  clinic          Clinic           @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  sessions        Session[]
+  progressNotes   ProgressNote[]
+  appointments    Appointment[]
+  exportRecords   ExportRecord[]
+  patientConsents PatientConsent[]
+  fullName        String
+  dateOfBirth     DateTime?
+  sex             PatientSex?
+  phone           String?
+  email           String?
+  addressLine     String?
+  clinicalNotes   String?
+  conditionTags   String[]         @default([])
+  archivedAt      DateTime?
+  createdAt       DateTime         @default(now())
+  updatedAt       DateTime         @updatedAt
+
+  @@unique([id, clinicId])
+  @@index([clinicId])
+  @@index([clinicId, archivedAt])
+  @@index([clinicId, fullName])
+  @@index([clinicId, phone])
+  @@index([clinicId, email])
+}
+
+enum NoteStatus {
+  draft
+  finalized
+  reopened
+}
+
+model Session {
+  id                               String         @id @default(cuid())
+  clinicId                         String
+  clinic                           Clinic         @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patientId                        String
+  patient                          Patient        @relation(fields: [patientId, clinicId], references: [id, clinicId], onDelete: Restrict)
+  progressNote                     ProgressNote?
+  exportRecords                    ExportRecord[]
+  startedAt                        DateTime
+  visitType                        String
+  noteStatus                       NoteStatus
+  finalNote                        String?
+  patientSummary                   String?
+  priorPlan                        String?
+  carryForwardContext              String?
+  activeTemplateSnapshotLabel      String?
+  activeTemplateSnapshotCategories String[]       @default([])
+  activeTemplateSnapshotSource     String?
+  activeTemplateApplyMode          String?
+  createdAt                        DateTime       @default(now())
+  updatedAt                        DateTime       @updatedAt
+
+  @@unique([id, clinicId])
+  @@index([clinicId])
+  @@index([clinicId, patientId, startedAt])
+  @@index([clinicId, startedAt])
+}
+
+model ProgressNote {
+  id                         String   @id @default(cuid())
+  clinicId                   String
+  clinic                     Clinic   @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patientId                  String
+  patient                    Patient  @relation(fields: [patientId, clinicId], references: [id, clinicId], onDelete: Restrict)
+  sessionId                  String   @unique
+  session                    Session  @relation(fields: [sessionId, clinicId], references: [id, clinicId], onDelete: Restrict)
+  subjective                 String?
+  objective                  String?
+  assessment                 String?
+  plan                       String?
+  templateKey                String?
+  templateSnapshotLabel      String?
+  templateSnapshotCategories String[] @default([])
+  templateSnapshotSource     String?
+  templateApplyMode          String?
+  createdAt                  DateTime @default(now())
+  updatedAt                  DateTime @updatedAt
+
+  @@unique([id, clinicId])
+  @@unique([sessionId, clinicId])
+  @@index([clinicId, patientId])
+  @@index([clinicId, sessionId])
+}
+
+model CustomTemplateCategory {
+  id          String                       @id @default(cuid())
+  clinicId    String
+  clinic      Clinic                       @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  ownerUserId String
+  ownerUser   User                         @relation(fields: [ownerUserId, clinicId], references: [id, clinicId], onDelete: Cascade)
+  label       String
+  templates   CustomTemplateCategoryLink[]
+  createdAt   DateTime                     @default(now())
+  updatedAt   DateTime                     @updatedAt
+
+  @@unique([id, clinicId])
+  @@unique([clinicId, ownerUserId, label])
+  @@index([clinicId, ownerUserId])
+}
+
+model CustomTemplate {
+  id          String                       @id @default(cuid())
+  clinicId    String
+  clinic      Clinic                       @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  ownerUserId String
+  ownerUser   User                         @relation(fields: [ownerUserId, clinicId], references: [id, clinicId], onDelete: Cascade)
+  name        String
+  source      String                       @default("custom")
+  subjective  String?
+  objective   String?
+  assessment  String?
+  plan        String?
+  categories  CustomTemplateCategoryLink[]
+  createdAt   DateTime                     @default(now())
+  updatedAt   DateTime                     @updatedAt
+
+  @@unique([id, clinicId])
+  @@unique([clinicId, ownerUserId, name])
+  @@index([clinicId, ownerUserId, updatedAt])
+}
+
+model CustomTemplateCategoryLink {
+  templateId String
+  categoryId String
+  template   CustomTemplate         @relation(fields: [templateId], references: [id], onDelete: Cascade)
+  category   CustomTemplateCategory @relation(fields: [categoryId], references: [id], onDelete: Cascade)
+
+  @@id([templateId, categoryId])
+  @@index([categoryId])
+}
+
+enum AppointmentStatus {
+  upcoming
+  completed
+  cancelled
+  missed
+}
+
+enum SyncStatus {
+  manual
+  synced
+  pending
+  failed
+}
+
+model Appointment {
+  id                  String            @id @default(cuid())
+  clinicId            String
+  clinic              Clinic            @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patientId           String?
+  patient             Patient?          @relation(fields: [patientId, clinicId], references: [id, clinicId], onDelete: Restrict)
+  patientNameSnapshot String?
+  scheduledAt         DateTime
+  durationMinutes     Int
+  status              AppointmentStatus
+  linkedSessionId     String?
+  notes               String?
+  syncStatus          SyncStatus        @default(manual)
+  syncedAt            DateTime?
+  createdAt           DateTime          @default(now())
+  updatedAt           DateTime          @updatedAt
+
+  @@unique([id, clinicId])
+  @@index([clinicId])
+  @@index([clinicId, scheduledAt])
+  @@index([clinicId, status])
+  @@index([clinicId, patientId])
+}
+
+model ClinicianNotificationPreference {
+  id                    String   @id @default(cuid())
+  userId                String
+  clinicId              String
+  user                  User     @relation(fields: [userId, clinicId], references: [id, clinicId], onDelete: Cascade)
+  defaultReminderTiming String   @default("30m")
+  pushEnabled           Boolean  @default(true)
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@unique([userId, clinicId])
+  @@index([clinicId, userId])
+}
+
+model User {
+  id                                 String                            @id @default(cuid())
+  clinicId                           String
+  clinic                             Clinic                            @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  email                              String                            @unique
+  emailVerified                      Boolean                           @default(false)
+  dataHandlingAcknowledgementVersion String?
+  dataHandlingAcknowledgedAt         DateTime?
+  passwordHash                       String
+  firstName                          String
+  lastName                           String
+  tokenVersion                       Int                               @default(0)
+  audioRetentionPeriod               String                            @default("30d")
+  refreshTokens                      RefreshToken[]
+  exportRecords                      ExportRecord[]
+  auditEvents                        AuditEvent[]
+  notificationPreferences            ClinicianNotificationPreference[]
+  customTemplateCategories           CustomTemplateCategory[]
+  customTemplates                    CustomTemplate[]
+  createdAt                          DateTime                          @default(now())
+  updatedAt                          DateTime                          @updatedAt
+
+  @@unique([id, clinicId])
+  @@index([clinicId])
+}
+
+model RefreshToken {
+  id                String         @id @default(cuid())
+  userId            String
+  clinicId          String
+  user              User           @relation(fields: [userId, clinicId], references: [id, clinicId], onDelete: Cascade)
+  tokenHash         String         @unique
+  sessionId         String         @unique
+  expiresAt         DateTime
+  revokedAt         DateTime?
+  replacedByTokenId String?
+  replacedByToken   RefreshToken?  @relation("RefreshTokenRotation", fields: [replacedByTokenId], references: [id])
+  previousTokens    RefreshToken[] @relation("RefreshTokenRotation")
+  createdAt         DateTime       @default(now())
+  updatedAt         DateTime       @updatedAt
+
+  @@index([clinicId, userId])
+}
+
+enum ExportRecordAction {
+  saved
+  shared
+  copied
+}
+
+enum ExportRecordType {
+  fullNote
+  patientSummary
+}
+
+enum ExportRecordFormat {
+  pdf
+  text
+}
+
+model ExportRecord {
+  id               String             @id @default(cuid())
+  clinicId         String
+  clinic           Clinic             @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patientId        String
+  patient          Patient            @relation(fields: [patientId, clinicId], references: [id, clinicId], onDelete: Restrict)
+  sessionId        String
+  session          Session            @relation(fields: [sessionId, clinicId], references: [id, clinicId], onDelete: Restrict)
+  exportedByUserId String
+  exportedByUser   User               @relation(fields: [exportedByUserId, clinicId], references: [id, clinicId], onDelete: Restrict)
+  action           ExportRecordAction
+  type             ExportRecordType
+  format           ExportRecordFormat
+  fileStorageKey   String?
+  fileSizeBytes    Int?
+  fileStatus       String?            @default("pending")
+  fileError        String?
+  fileExpiresAt    DateTime?
+  createdAt        DateTime           @default(now())
+
+  @@index([clinicId])
+  @@index([clinicId, patientId, createdAt])
+  @@index([clinicId, sessionId])
+  @@index([clinicId, exportedByUserId])
+  @@index([clinicId, fileStatus])
+}
+
+model AuditEvent {
+  id        String   @id @default(cuid())
+  eventType String
+  sessionId String
+  userId    String
+  clinicId  String
+  timestamp DateTime @default(now())
+  metadata  Json?
+  user      User     @relation(fields: [userId, clinicId], references: [id, clinicId], onDelete: Cascade)
+
+  @@index([clinicId, sessionId, timestamp])
+  @@index([clinicId, userId])
+}
+
+enum VoiceJobStatus {
+  queued
+  processing
+  succeeded
+  failed
+}
+
+model VoiceJob {
+  id                       String         @id @default(cuid())
+  clinicId                 String
+  patientId                String
+  sessionId                String?
+  uploadId                 String
+  status                   VoiceJobStatus @default(queued)
+  stageState               String         @default("queued_transcription")
+  audioUrl                 String?
+  storageKey               String?
+  durationSeconds          Int?
+  transcriptText           String?
+  soapDraft                String?
+  patientSummary           String?
+  sttProviderRequestId     String?
+  llmProviderRequestId     String?
+  summaryProviderRequestId String?
+  createdAt                DateTime       @default(now())
+  updatedAt                DateTime       @updatedAt
+  completedAt              DateTime?
+  errorMessage             String?
+  attempts                 Int            @default(1)
+  resends                  Int            @default(0)
+  stageRetries             Json?
+
+  @@index([clinicId])
+  @@index([clinicId, status])
+  @@index([clinicId, stageState])
+  @@index([clinicId, createdAt])
+}
+
+enum VoiceUploadStatus {
+  created
+  uploading
+  uploaded
+  completed
+  failed
+}
+
+model VoiceUpload {
+  id                String            @id @default(cuid())
+  clinicId          String
+  patientId         String
+  uploadId          String            @unique
+  storageKey        String
+  mimeType          String
+  fileSizeBytes     Int
+  status            VoiceUploadStatus @default(created)
+  expiresAt         DateTime
+  completedAt       DateTime?
+  providerRequestId String?
+  createdAt         DateTime          @default(now())
+  updatedAt         DateTime          @updatedAt
+
+  @@index([clinicId, uploadId])
+  @@index([clinicId, status])
+}
+
+model PatientConsent {
+  id                 String    @id @default(cuid())
+  clinicId           String
+  clinic             Clinic    @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patientId          String
+  patient            Patient   @relation(fields: [patientId, clinicId], references: [id, clinicId], onDelete: Restrict)
+  type               String
+  status             String
+  source             String
+  consentTextVersion String
+  consentedAt        DateTime
+  revokedAt          DateTime?
+  createdAt          DateTime  @default(now())
+  updatedAt          DateTime  @updatedAt
+
+  @@unique([clinicId, patientId, type, status])
+  @@index([clinicId, patientId, type, status])
+}

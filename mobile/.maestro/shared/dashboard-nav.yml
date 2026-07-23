@@ -1,0 +1,33 @@
+appId: ${APP_ID}
+---
+- runFlow:
+    label: Sign in
+    file: ../shared/signin.yml
+- assertVisible:
+    id: dashboard-search-input
+- tapOn:
+    id: dashboard-search-input
+- inputText: dashboard
+- pressKey: back
+- tapOn:
+    id: dashboard-filter-draft-chip
+- tapOn:
+    id: dashboard-filter-finalized-chip
+- tapOn:
+    id: dashboard-filter-all-chip
+- tapOn:
+    id: bottom-nav-patients
+- assertVisible:
+    id: patient-list-search-input
+- tapOn:
+    id: bottom-nav-calendar
+- assertVisible:
+    id: calendar-new-appointment-button
+- tapOn:
+    id: bottom-nav-profile
+- assertVisible:
+    id: settings-save-button
+- tapOn:
+    id: bottom-nav-sessions
+- assertVisible:
+    id: dashboard-search-input

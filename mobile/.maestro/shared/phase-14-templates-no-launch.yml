@@ -1,0 +1,76 @@
+appId: host.exp.exponent
+---
+# We assume the app is already open in Expo Go and logged in.
+- waitForAnimationToEnd:
+    timeout: 15000
+
+- tapOn:
+    id: dashboard-create-session-button
+- tapOn:
+    id: select-patient-patient-0-card
+
+- assertVisible:
+    id: start-session-view-library-button
+- tapOn:
+    id: start-session-view-library-button
+
+# Template Library
+- assertVisible:
+    id: template-library-search-input
+- assertVisible:
+    id: template-library-blank-session-card
+
+# Test Template Editor Navigation
+- tapOn:
+    id: template-library-create-template-button
+- waitForAnimationToEnd:
+    timeout: 5000
+- assertVisible:
+    id: template-editor-name-input
+- tapOn:
+    id: template-editor-back-button
+- assertVisible:
+    id: template-library-search-input
+
+# Search and Preview
+- scrollUntilVisible:
+    element:
+      id: template-library-template-0-card
+    direction: DOWN
+    timeout: 20000
+
+# Preview
+- tapOn:
+    id: template-library-template-0-card
+- assertVisible:
+    id: template-library-preview-back-button
+- scrollUntilVisible:
+    element:
+      id: template-library-use-template-button
+    direction: DOWN
+    timeout: 20000
+- tapOn:
+    id: template-library-use-template-button
+
+# SOAP Composer (Verify provenance is NOT hidden anymore)
+- scrollUntilVisible:
+    element:
+      id: note-template-provenance-label
+    direction: DOWN
+    timeout: 30000
+- assertVisible:
+    id: note-template-provenance-label
+- assertVisible:
+    id: note-mode-fill-blanks-chip
+- assertVisible:
+    id: note-mode-replace-all-chip
+
+# Change mode
+- tapOn:
+    id: note-mode-replace-all-chip
+
+# Apply another template from composer
+- tapOn:
+    id: note-template-0-card
+- assertVisible:
+    id: note-template-provenance-label

@@ -1,0 +1,45 @@
+export const meridian = {
+  color: {
+    primary: "#3F527A",
+    primarySoft: "#E8ECF6",
+    background: "#F6F4EF",
+    surface: "#FBFAF7",
+    surfaceMuted: "#EEEDE8",
+    text: "#1D2734",
+    textSubtle: "#657080",
+    border: "#D9DCD8",
+    success: "#2F6B55",
+    successSoft: "#E6F0E9",
+    warning: "#806320",
+    warningSoft: "#F7EED7",
+    destructive: "#A33C36",
+    errorSurface: "#FAECEA",
+    errorBorder: "#E8CAC6",
+    devBannerSurface: "#EEEAF5",
+    devBannerText: "#3F527A",
+  },
+  spacing: {
+    xs: 4,
+    sm: 8,
+    md: 16,
+    lg: 24,
+    xl: 32,
+    "2xl": 48,
+    "3xl": 64,
+  },
+  radius: {
+    chip: 999,
+    control: 12,
+    card: 12,
+    dock: 16,
+  },
+  shadow: {
+    card: {
+      boxShadow: "none",
+    },
+  },
+  touchTarget: {
+    visible: 44,
+    hit: 48,
+  },
+} as const;
