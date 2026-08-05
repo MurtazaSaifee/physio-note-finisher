@@ -15,7 +15,9 @@ AI output is always an editable draft. Manual note entry remains available when 
 
 ## Demo
 
-[Watch the 40-second local walkthrough (MP4)](docs/demo/physio-note-finisher-demo.mp4)
+**40-second local walkthrough (synthetic data)**
+
+https://github.com/user-attachments/assets/8a867cc8-cf78-4caf-9507-ec838af14bf4
 
 The video uses only the repository's synthetic seeded data and demonstrates patient context, editable SOAP-note review, a finalized note with a patient-friendly summary, and export actions. It does not demonstrate a live AI/voice request, production deployment, or clinical compliance.
 
