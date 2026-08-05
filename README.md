@@ -13,6 +13,12 @@ The app supports:
 
 AI output is always an editable draft. Manual note entry remains available when Sarvam is unconfigured or unavailable.
 
+## Demo
+
+[Watch the 40-second local walkthrough (MP4)](docs/demo/physio-note-finisher-demo.mp4)
+
+The video uses only the repository's synthetic seeded data and demonstrates patient context, editable SOAP-note review, a finalized note with a patient-friendly summary, and export actions. It does not demonstrate a live AI/voice request, production deployment, or clinical compliance.
+
 ## Architecture
 
 ```mermaid
