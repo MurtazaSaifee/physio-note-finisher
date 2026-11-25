@@ -26,12 +26,13 @@ export type SignInFormValues = z.infer<typeof signInSchema>;
 
 type SignInScreenProps = {
   onSubmit(values: SignInFormValues): Promise<void> | void;
-  onForgotPassword?(): void;
+  onForgotPassword(): void;
   defaultValues?: Partial<SignInFormValues>;
 };
 
 export function SignInScreen({
   onSubmit,
+  onForgotPassword,
   defaultValues,
 }: SignInScreenProps): React.JSX.Element {
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
@@ -41,7 +42,7 @@ export function SignInScreen({
   const { control, handleSubmit } = useForm<SignInFormValues>({
     resolver: zodResolver(signInSchema),
     defaultValues: {
-      email: defaultValues?.email ?? "clinician@example.com",
+      email: defaultValues?.email ?? "",
       password: defaultValues?.password ?? "",
     },
   });
@@ -91,7 +92,7 @@ export function SignInScreen({
                   autoCapitalize="none"
                   autoComplete="off"
                   keyboardType="email-address"
-                  placeholder="clinician@example.com"
+                  placeholder="name@clinic.com"
                   importantForAutofill="no"
                   onBlur={onBlur}
                   onChangeText={onChange}
@@ -165,13 +166,23 @@ export function SignInScreen({
             variant="primary"
             onPress={submit}
             disabled={isSubmitting}
-            testID="login-submit-button"
+            testID="signin-submit-button"
           />
           {isSubmitting && (
             <View style={styles.spinnerOverlay}>
               <ActivityIndicator color={meridian.color.surface} />
             </View>
           )}
+        </View>
+
+        <View style={styles.forgotPasswordContainer}>
+          <MeridianButton
+            label="Forgot Password?"
+            variant="ghost"
+            onPress={onForgotPassword}
+            disabled={isSubmitting}
+            testID="signin-forgot-password-button"
+          />
         </View>
       </MeridianCard>
     </KeyboardAvoidingView>
@@ -245,6 +256,9 @@ const styles = StyleSheet.create({
   buttonContainer: {
     marginTop: meridian.spacing.xs,
     position: "relative",
+  },
+  forgotPasswordContainer: {
+    marginTop: meridian.spacing.xs,
   },
   spinnerOverlay: {
     ...StyleSheet.absoluteFillObject,

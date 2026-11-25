@@ -7,9 +7,16 @@ const rootDir = path.resolve(__dirname, "..");
 const npmCmd = process.platform === "win32" ? "npm.cmd" : "npm";
 
 const steps = [
+  { label: "React doctor", command: npmCmd, args: ["run", "react-doctor"] },
+  { label: "Prisma doctor", command: npmCmd, args: ["run", "doctor:prisma"] },
   { label: "Lint", command: npmCmd, args: ["run", "lint"] },
   { label: "Typecheck", command: npmCmd, args: ["run", "typecheck"] },
   { label: "Tests", command: npmCmd, args: ["run", "test"] },
+  {
+    label: "CI backend test",
+    command: npmCmd,
+    args: ["run", "test:ci:backend"],
+  },
 ];
 
 function main() {

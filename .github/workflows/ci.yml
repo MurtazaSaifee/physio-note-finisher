@@ -1,66 +1,63 @@
-name: Continuous Integration
+name: CI
 
 on:
   push:
-    branches: [ main ]
+    branches: [main]
   pull_request:
-    branches: [ main ]
+    branches: [main]
+
+permissions:
+  contents: read
 
 jobs:
-  quality:
-    name: Build, Typecheck & Test
+  verify:
+    name: Verify repository
     runs-on: ubuntu-latest
+    timeout-minutes: 30
 
     services:
       postgres:
         image: postgres:16-alpine
         env:
-          POSTGRES_USER: postgres
-          POSTGRES_PASSWORD: postgrespassword
-          POSTGRES_DB: physio_test
+          POSTGRES_USER: physio_dev
+          POSTGRES_PASSWORD: physio_dev_pass
+          POSTGRES_DB: physio_note_finisher
         ports:
-          - 5432:5432
+          - 5433:5432
         options: >-
-          --health-cmd pg_isready
-          --health-interval 10s
+          --health-cmd "pg_isready -U physio_dev -d physio_note_finisher"
+          --health-interval 5s
           --health-timeout 5s
-          --health-retries 5
+          --health-retries 10
 
     env:
-      DATABASE_URL: postgresql://postgres:postgrespassword@localhost:5432/physio_test?schema=public
-      APP_ENV: local
-      JWT_ACCESS_SECRET: ci-access-secret
-      JWT_REFRESH_SECRET: ci-refresh-secret
-      ACCESS_TOKEN_TTL_SECONDS: 900
-      REFRESH_TOKEN_TTL_SECONDS: 604800
-      BCRYPT_COST_FACTOR: 8
-      AUTH_LOGIN_RATE_LIMIT_PER_MINUTE: 100
-      AUTH_REFRESH_RATE_LIMIT_PER_MINUTE: 100
-      NODE_ENV: test
+      # Same throwaway database as docker-compose.yml; never a real deployment.
+      DATABASE_URL: postgresql://physio_dev:physio_dev_pass@localhost:5433/physio_note_finisher
 
     steps:
-      - name: Checkout Codebase
+      - name: Check out source
         uses: actions/checkout@v4
 
-      - name: Setup Node.js 20
+      - name: Set up Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
-          cache: 'npm'
+          node-version-file: .nvmrc
+          cache: npm
 
-      - name: Install Dependencies
+      - name: Install dependencies
         run: npm ci
 
-      - name: Generate Prisma Client & Run Migrations
+      - name: Dependency audit
+        run: npm run audit:gate
+
+      - name: Generate Prisma client
+        run: npm --workspace backend run prisma:generate
+
+      - name: Apply migrations and seed
+        working-directory: backend
         run: |
-          npm --workspace backend run prisma:generate
-          npm --workspace backend run prisma:migrate:deploy
+          npx prisma migrate deploy
+          npm run db:seed
 
-      - name: Run TypeScript Typecheck
-        run: npm run typecheck
-
-      - name: Run Test Suite
-        run: npm run test
-
-      - name: Audit Dependencies
-        run: npm audit --audit-level=high
+      - name: Doctors, lint, typecheck and tests
+        run: npm run verify:local

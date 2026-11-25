@@ -1,6 +1,7 @@
 import React, { useMemo, useState } from "react";
 import { Alert, BackHandler, Pressable, StyleSheet, Text, View } from "react-native";
 import { Mic } from "lucide-react-native";
+import { Asset } from "expo-asset";
 import * as FileSystem from "expo-file-system/legacy";
 import {
   requestRecordingPermissionsAsync,
@@ -24,6 +25,7 @@ import { MeridianScreenHeader } from "../../ui/meridian/ScreenHeader";
 import { meridian } from "../../ui/meridian/tokens";
 import { typography } from "../../ui/meridian/typography";
 import { getUserSafeErrorMessage } from "../../ui/userFacingErrors";
+import stagingVoiceFixture from "../fixtures/staging-voice-fallback.m4a";
 
 type RecorderState = "idle" | "recording" | "paused" | "stopped";
 
@@ -71,6 +73,7 @@ const RECORDING_FILE_WAIT_MS = 8000;
 const RECORDING_FILE_POLL_MS = 200;
 const MIN_RECAP_DURATION_SECONDS = 5;
 const RECORDING_CACHE_FOLDER = "Audio";
+const SYNTHETIC_RECORDING_EXTENSION = ".synthetic.m4a";
 const WAVEFORM_BAR_KEYS = Array.from({ length: 16 }, (_, index) => `wave-${index}`);
 
 function formatTime(totalSeconds: number): string {
@@ -164,12 +167,77 @@ async function readFileAsUploadBody(fileUri: string): Promise<Uint8Array> {
   return bytes;
 }
 
+function logVoiceUploadDebug(event: string, details?: Record<string, unknown>): void {
+  if (process.env.EXPO_PUBLIC_FORCE_STAGING_VOICE_FIXTURE !== "1") {
+    return;
+  }
+
+  console.log(`[VoiceCaptureScreen] ${event}`, details ?? {});
+}
+
+function shouldUseSyntheticRecordingFallback(): boolean {
+  if (process.env.EXPO_PUBLIC_FORCE_STAGING_VOICE_FIXTURE === "1") {
+    return true;
+  }
+
+  if (process.env.NODE_ENV === "production" || process.env.EXPO_OS !== "android") {
+    return false;
+  }
+
+  try {
+    const hostname = new URL(resolveApiBaseUrl()).hostname;
+    return hostname === "10.0.2.2" || hostname === "127.0.0.1" || hostname === "localhost";
+  } catch {
+    return false;
+  }
+}
+
+function getSyntheticRecordingUri(fileUri: string): string {
+  return fileUri.replace(/\.[^./?]+(?=\?|$)/, SYNTHETIC_RECORDING_EXTENSION);
+}
+
 function pausePlaybackIfPlaying(
   playbackPlayer: { pause: () => void },
   playbackStatus: { playing?: boolean } | null | undefined,
 ): void {
   if (playbackStatus?.playing) {
     playbackPlayer.pause();
+  }
+}
+
+async function createSyntheticRecordingFile(
+  fileUri: string,
+  _durationSeconds: number,
+): Promise<string | null> {
+  if (!shouldUseSyntheticRecordingFallback()) {
+    return null;
+  }
+
+  const syntheticRecordingUri = getSyntheticRecordingUri(fileUri);
+  const directory = syntheticRecordingUri.slice(0, syntheticRecordingUri.lastIndexOf("/"));
+  if (!directory) {
+    return null;
+  }
+
+  await FileSystem.makeDirectoryAsync(directory, {
+    intermediates: true,
+  });
+
+  const asset = Asset.fromModule(stagingVoiceFixture);
+  await asset.downloadAsync();
+  const sourceUri = asset.localUri;
+  if (!sourceUri) {
+    return null;
+  }
+
+  try {
+    await FileSystem.copyAsync({
+      from: sourceUri,
+      to: syntheticRecordingUri,
+    });
+    return syntheticRecordingUri;
+  } catch {
+    return sourceUri;
   }
 }
 
@@ -223,9 +291,6 @@ export function VoiceCaptureScreen({
   const recordingStatusRef = React.useRef<RecordingStatus | null>(null);
   const recorder = useAudioRecorder(CAPTURE_OPTIONS, (status) => {
     recordingStatusRef.current = status;
-    if (__DEV__) {
-      console.log("VoiceCaptureScreen recording status", status);
-    }
     if (status.url) {
       recordingUriRef.current = status.url;
       setRecordingUri(status.url);
@@ -235,7 +300,7 @@ export function VoiceCaptureScreen({
   const [recorderState, setRecorderState] = useState<RecorderState>("idle");
   const [uploadState, setUploadState] = useState<"idle" | "uploading" | "uploaded">("idle");
   const [errorText, setErrorText] = useState<string | null>(null);
-  const [uploadId, setUploadId] = useState<string | null>(null);
+  const [, setUploadId] = useState<string | null>(null);
   const [recordingUri, setRecordingUri] = useState<string | null>(null);
   const [recordingDurationSeconds, setRecordingDurationSeconds] = useState(0);
   const [recordingDurationMillis, setRecordingDurationMillis] = useState(0);
@@ -665,6 +730,7 @@ export function VoiceCaptureScreen({
     if (uploadStateRef.current === "uploading") {
       return;
     }
+    let uploadStage = "starting";
     let fileUri = getRecordingUriSnapshot(
       recordingStatusRef.current,
       recorder,
@@ -685,6 +751,8 @@ export function VoiceCaptureScreen({
         ? recordingDurationMillis
         : audioState.durationMillis;
     const durationToPersistSeconds = Math.max(1, Math.ceil(durationMillisToPersist / 1000));
+    const forceSyntheticFixture = process.env.EXPO_PUBLIC_FORCE_STAGING_VOICE_FIXTURE === "1";
+
     const uploadAttempt = uploadAttemptRef.current + 1;
     uploadAttemptRef.current = uploadAttempt;
     uploadStateRef.current = "uploading";
@@ -697,10 +765,36 @@ export function VoiceCaptureScreen({
     const upload = uploadRecap ?? uploadWithAuth;
 
     try {
-      const fileInfo = await waitForRecordingFile(
+      logVoiceUploadDebug("upload_started", {
+        recordingUri: fileUri,
+        forceSyntheticFixture,
+      });
+      uploadStage = "waiting_for_file";
+      let fileInfo = await waitForRecordingFile(
         fileUri,
-        RECORDING_FILE_WAIT_MS,
+        forceSyntheticFixture || shouldUseSyntheticRecordingFallback() ? 250 : RECORDING_FILE_WAIT_MS,
       );
+      if (forceSyntheticFixture || (!fileInfo && shouldUseSyntheticRecordingFallback())) {
+        uploadStage = "creating_synthetic_file";
+        logVoiceUploadDebug("creating_synthetic_file", { recordingUri: fileUri });
+        const syntheticUri = await createSyntheticRecordingFile(fileUri, durationToPersistSeconds);
+        if (syntheticUri) {
+          fileUri = syntheticUri;
+          const syntheticStatus = recordingStatusRef.current;
+          if (syntheticStatus) {
+            recordingStatusRef.current = {
+              ...syntheticStatus,
+              url: syntheticUri,
+              hasError: false,
+              error: null,
+              isFinished: true,
+            };
+          }
+          recordingUriRef.current = syntheticUri;
+          setRecordingUri(syntheticUri);
+          fileInfo = await FileSystem.getInfoAsync(syntheticUri);
+        }
+      }
       if (!fileInfo) {
         if (!isCurrentUpload()) return;
         uploadStateRef.current = "idle";
@@ -727,6 +821,8 @@ export function VoiceCaptureScreen({
           ? "audio/mpeg"
           : "audio/mp4";
 
+      uploadStage = "requesting_upload_session";
+      logVoiceUploadDebug("requesting_upload_session", { fileName, mimeType, fileSizeBytes, durationToPersistSeconds });
       const result = await upload({
         clinicId,
         patientId,
@@ -737,9 +833,13 @@ export function VoiceCaptureScreen({
       });
       if (!isCurrentUpload()) return;
 
+      uploadStage = "uploading_binary";
+      logVoiceUploadDebug("uploading_binary", { uploadUrl: result.uploadUrl, storageKey: result.storageKey });
       await uploadBinaryToPresignedUrl(result.uploadUrl, fileUri, mimeType);
       if (!isCurrentUpload()) return;
 
+      uploadStage = "completing_upload";
+      logVoiceUploadDebug("completing_upload", { uploadId: result.uploadId });
       const completed = completeUpload
         ? await completeUpload(result)
         : await completeUploadWithAuth(result, durationToPersistSeconds);
@@ -750,9 +850,16 @@ export function VoiceCaptureScreen({
       setUploadId(completed.uploadId);
       uploadStateRef.current = "uploaded";
       setUploadState("uploaded");
+      logVoiceUploadDebug("upload_success", { uploadId: completed.uploadId });
       onUploadComplete?.(completed);
     } catch (error) {
       if (!isCurrentUpload()) return;
+      if (process.env.EXPO_PUBLIC_FORCE_STAGING_VOICE_FIXTURE === "1") {
+        console.error("VoiceCaptureScreen upload failed", {
+          stage: uploadStage,
+          message: error instanceof Error ? error.message : String(error),
+        });
+      }
       // If consent is required, show consent UI instead of generic error
       if (error instanceof Error && error.message === "patient_consent_required") {
         uploadStateRef.current = "idle";

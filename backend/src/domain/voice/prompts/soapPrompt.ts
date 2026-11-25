@@ -15,7 +15,7 @@ Return only valid JSON matching this schema:
   "plan": "string",
   "metadata": {
     "language": "string (optional)",
-    "confidence": "\"high\" | \"medium\" | \"low\" (optional)",
+    "confidence": ""high" | "medium" | "low" (optional)",
     "missingInformation": ["string", "..."] (optional),
     "requiresClinicianReview": "boolean (optional)"
   }

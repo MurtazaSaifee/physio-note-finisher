@@ -6,18 +6,19 @@ appId: ${APP_ID}
 - runScript: wait-for-auth-bootstrap.js
 - assertVisible:
     id: signin-submit-button
-- longPressOn:
+- tapOn:
     id: signin-email-input
-- eraseText: 100
 - inputText: ${LOGIN_EMAIL}
-- longPressOn:
+- tapOn:
     id: signin-password-input
-- eraseText: 100
 - inputText: ${LOGIN_PASSWORD}
-- pressKey: back
+- hideKeyboard
 - tapOn:
     id: signin-submit-button
     retryTapIfNoChange: true
-- assertVisible: Clinical Dashboard
+- extendedWaitUntil:
+    visible:
+      id: bottom-nav-patients
+    timeout: 20000
 - assertVisible:
-    id: bottom-nav-sessions
+    id: patient-list-search-input

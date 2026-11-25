@@ -1,7 +1,26 @@
-# Case study: clinician-controlled notes
+# Case study: AI drafts, clinician-owned notes
 
-AI-generated text is treated as a draft, not a signed clinical fact. The mobile workflow presents transcript and SOAP sections for clinician editing before finalization. A manual SOAP composer remains available without Sarvam.
+**Problem.** An AI-drafted note that looks finished invites signing without reading.
+A clinical record also has to stay trustworthy after it is signed.
 
-Finalized notes reject normal editing. The application also exposes an explicit reopen action, so the accurate invariant is “locked until deliberately reopened,” not permanent immutability. Session creation is restricted to draft status; finalization must pass through the note workflow where review and audit behavior are applied.
+**Design.**
 
-Patient AI-processing consent is checked before audio, transcripts or stored SOAP text are sent to Sarvam. These controls reduce accidental disclosure and unreviewed finalization, but they do not make this demonstration a certified medical-record system.
+- **Drafts, never facts.** Transcript, SOAP sections and the patient summary all
+  arrive as editable drafts. The app walks the clinician through
+  Draft → Review → Finish, section by section, before finalizing.
+- **AI is optional.** The manual SOAP composer works with no provider at all, and
+  is the path the app falls back to when AI is unavailable.
+- **Locked, not frozen.** Finalized notes reject ordinary edits. Reopening is an
+  explicit endpoint that writes an audit event, so the invariant is "locked until
+  deliberately reopened"
+  ([`routes/notes.ts`](../../backend/src/api/routes/notes.ts),
+  [`auditService.ts`](../../backend/src/domain/audit/auditService.ts)).
+- **No shortcuts.** Sessions can only be created as drafts; finalization has to go
+  through the note workflow
+  ([`sessionSchemas.ts`](../../backend/src/domain/sessions/sessionSchemas.ts)).
+- **Consent before any AI.** Audio, transcripts and stored SOAP text are only sent
+  to a provider after an active patient consent check
+  ([`requirePatientAiConsent.ts`](../../backend/src/api/middleware/requirePatientAiConsent.ts)).
+
+**Limits.** These controls reduce unreviewed finalization and accidental
+disclosure. They don't make this a certified medical-record system.

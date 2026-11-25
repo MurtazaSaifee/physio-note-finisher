@@ -1,5 +1,10 @@
 import { prisma } from "../data/prismaClient.js";
-import { putObject } from "../infrastructure/storage/localStorageProvider.js";
+import { putObject } from "../infrastructure/s3/s3Client.js";
+import {
+  EXPORT_QUEUE,
+  requireQueueUrl,
+  sendPointerMessage,
+} from "../infrastructure/sqs/sqsQueues.js";
 import { createLogger } from "../observability/logger.js";
 import { generateSoapPdfExport } from "../domain/exports/pdfExportService.js";
 
@@ -23,6 +28,31 @@ export interface ExportQueue {
       jobId?: string;
     },
   ): Promise<unknown>;
+}
+
+export function createSqsExportQueue(
+  queueUrl = EXPORT_QUEUE,
+) {
+  return {
+    async add(name: string, data: unknown, opts?: { jobId?: string }) {
+      const targetQueueUrl = requireQueueUrl(queueUrl, "SQS_EXPORT_QUEUE_URL");
+      const exportId =
+        data &&
+        typeof data === "object" &&
+        "exportId" in data &&
+        typeof data.exportId === "string"
+          ? data.exportId
+          : opts?.jobId?.replace(/-pdf$/, "");
+      if (!exportId) {
+        throw new Error("exportId is required for SQS export queue messages");
+      }
+      const result = await sendPointerMessage(targetQueueUrl, {
+        jobType: name,
+        jobId: exportId,
+      });
+      return { id: result.id ?? opts?.jobId ?? exportId };
+    },
+  };
 }
 
 export function createLocalExportQueue(): ExportQueue {
@@ -130,7 +160,7 @@ export async function processExportJob(data: ExportJobData): Promise<void> {
     plan: progressNote?.plan ?? "",
   });
 
-  // 8. Store PDF in local storage
+  // 8. Store PDF in S3/local storage
   const storageKey = `clinics/${clinicId}/exports/${sessionId}/${exportId}.pdf`;
   await putObject(storageKey, pdfBuffer, "application/pdf");
 

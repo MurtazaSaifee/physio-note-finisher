@@ -35,6 +35,9 @@ type AppointmentRow = Prisma.AppointmentGetPayload<{
     status: true;
     linkedSessionId: true;
     notes: true;
+    syncStatus: true;
+    syncedAt: true;
+    googleEventId: true;
     createdAt: true;
     updatedAt: true;
   };
@@ -102,6 +105,9 @@ function toDetail(
     linkedSessionId: row.linkedSessionId,
     reminderText: buildReminderText(patientName, row.scheduledAt),
     notes: row.notes,
+    syncStatus: row.syncStatus,
+    syncedAt: row.syncedAt?.toISOString() ?? null,
+    googleEventId: row.googleEventId,
     createdAt: row.createdAt.toISOString(),
     updatedAt: row.updatedAt.toISOString(),
   };
@@ -130,7 +136,7 @@ export async function createAppointment(input: {
   clinicId: string;
   input: CreateAppointmentRequest;
 }): Promise<AppointmentDetailResponse> {
-  const { patientId, patientNameSnapshot, scheduledAt, durationMinutes, notes } =
+  const { patientId, patientNameSnapshot, scheduledAt, durationMinutes, notes, syncStatus, googleEventId } =
     input.input;
 
   let resolvedPatientName: string | null = null;
@@ -165,6 +171,8 @@ export async function createAppointment(input: {
     durationMinutes,
     status: "upcoming",
     notes: notes ?? null,
+    syncStatus: syncStatus ?? "manual",
+    googleEventId: googleEventId ?? null,
   };
 
   if (patientId) {
@@ -190,6 +198,9 @@ export async function createAppointment(input: {
       status: true,
       linkedSessionId: true,
       notes: true,
+      syncStatus: true,
+      syncedAt: true,
+      googleEventId: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -267,6 +278,9 @@ export async function updateAppointment(input: {
       status: true,
       linkedSessionId: true,
       notes: true,
+      syncStatus: true,
+      syncedAt: true,
+      googleEventId: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -307,6 +321,9 @@ export async function rescheduleAppointment(input: {
       status: true,
       linkedSessionId: true,
       notes: true,
+      syncStatus: true,
+      syncedAt: true,
+      googleEventId: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -346,6 +363,9 @@ export async function cancelAppointment(input: {
       status: true,
       linkedSessionId: true,
       notes: true,
+      syncStatus: true,
+      syncedAt: true,
+      googleEventId: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -397,6 +417,9 @@ export async function listActiveAppointments(input: {
       status: true,
       linkedSessionId: true,
       notes: true,
+      syncStatus: true,
+      syncedAt: true,
+      googleEventId: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -441,6 +464,9 @@ export async function getAppointmentHistory(input: {
       status: true,
       linkedSessionId: true,
       notes: true,
+      syncStatus: true,
+      syncedAt: true,
+      googleEventId: true,
       createdAt: true,
       updatedAt: true,
     },
@@ -479,6 +505,9 @@ export async function getAppointmentDetail(input: {
       status: true,
       linkedSessionId: true,
       notes: true,
+      syncStatus: true,
+      syncedAt: true,
+      googleEventId: true,
       createdAt: true,
       updatedAt: true,
     },

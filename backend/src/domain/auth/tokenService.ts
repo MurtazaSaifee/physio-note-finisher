@@ -46,10 +46,12 @@ export function issueTokenPair(claims: AuthJwtClaims): IssuedTokenPair {
   const env = getTokenEnvironment();
 
   const accessToken = jwt.sign(claims, env.JWT_ACCESS_SECRET, {
+    algorithm: "HS256",
     expiresIn: env.ACCESS_TOKEN_TTL_SECONDS,
   });
 
   const refreshToken = jwt.sign(claims, env.JWT_REFRESH_SECRET, {
+    algorithm: "HS256",
     expiresIn: env.REFRESH_TOKEN_TTL_SECONDS,
   });
 
@@ -70,10 +72,9 @@ export function verifyRefreshToken(
   const env = getTokenEnvironment();
 
   try {
-    const payload = jwt.verify(
-      refreshToken,
-      env.JWT_REFRESH_SECRET,
-    ) as jwt.JwtPayload;
+    const payload = jwt.verify(refreshToken, env.JWT_REFRESH_SECRET, {
+      algorithms: ["HS256"],
+    }) as jwt.JwtPayload;
 
     if (
       typeof payload.sub !== "string" ||

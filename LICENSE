@@ -2,4 +2,8 @@ Copyright (c) 2026 Murtaza Saifee
 
 All rights reserved.
 
-This repository is provided for inspection. No permission is granted to copy, modify, distribute, sublicense, sell, or use this source code or its associated assets without prior written permission from the copyright holder.
+This repository is provided for inspection. You may clone it, build it and run it
+locally for the purpose of evaluating the code, for example as part of a hiring or
+technical review. No other permission is granted to copy, modify, distribute,
+sublicense, sell, or use this source code or its associated assets without prior
+written permission from the copyright holder.

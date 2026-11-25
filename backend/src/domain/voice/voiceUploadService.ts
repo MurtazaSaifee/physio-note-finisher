@@ -13,11 +13,7 @@ import {
   type VoiceJobStore,
 } from "./voiceJobService.js";
 import type { StageQueue } from "../../workers/voiceWorker.js";
-import {
-  createPresignedUploadUrl,
-  objectExists,
-  putObject,
-} from "../../infrastructure/storage/localStorageProvider.js";
+import { objectExists, createPresignedUploadUrl, putObject } from "../../infrastructure/s3/s3Client.js";
 import { createLogger } from "../../observability/logger.js";
 import { prisma } from "../../data/prismaClient.js";
 

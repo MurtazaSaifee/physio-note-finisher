@@ -106,12 +106,12 @@ export async function deleteAudioAndTranscript({
   jobId,
   clinicId,
   store,
-  deleteStoredObject,
+  s3DeleteObject,
 }: {
   jobId: string;
   clinicId: string;
   store?: VoiceJobStore;
-  deleteStoredObject?(keyOrUrl: string): Promise<void>;
+  s3DeleteObject?(keyOrUrl: string): Promise<void>;
 }): Promise<DeleteResult> {
   const targetStore = store ?? defaultStore;
   const job = await targetStore.find(jobId);
@@ -120,11 +120,11 @@ export async function deleteAudioAndTranscript({
   }
 
   const storagePointer = job.storageKey ?? job.audioUrl;
-  if (storagePointer && deleteStoredObject) {
+  if (storagePointer && s3DeleteObject) {
     try {
-      await deleteStoredObject(storagePointer);
+      await s3DeleteObject(storagePointer);
     } catch (error) {
-      logger.warn("retention.storage_delete_failed", {
+      logger.warn("retention.s3_delete_failed", {
         jobId,
         clinicId,
         errorClass: error instanceof Error ? error.name : "UnknownError",

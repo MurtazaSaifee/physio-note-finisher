@@ -28,14 +28,6 @@ function requireString(value: unknown, field: string): string {
   return value;
 }
 
-function requireStringOrNull(value: unknown, field: string): string | null {
-  if (value === null) {
-    return null;
-  }
-
-  return requireString(value, field);
-}
-
 function requireRecordEnvelope(payload: unknown, field: string): unknown {
   if (!isRecord(payload) || payload.success !== true) {
     throw new Error(`Invalid audit response payload: ${field}`);

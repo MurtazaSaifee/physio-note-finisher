@@ -561,7 +561,6 @@ async function transcribeWithBatchApi(
     );
   }
 
-  let downloadResult: SarvamSttDownloadResponse;
   try {
     response = await fetch(assertSafeProviderFileUrl(downloadUrl), {
       method: "GET",
@@ -584,7 +583,7 @@ async function transcribeWithBatchApi(
     );
   }
 
-  downloadResult = await response.json() as SarvamSttDownloadResponse;
+  const downloadResult = await response.json() as SarvamSttDownloadResponse;
   validateTranscriptionResult(downloadResult);
   return mapTranscriptionResult(downloadResult, statusResult.request_id ?? jobId);
 }

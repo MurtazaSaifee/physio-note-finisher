@@ -1,40 +1,45 @@
-# Testing and verification
+# Testing
 
-The repository uses Vitest for focused backend, mobile and shared-contract tests. Tests do not call Sarvam or require a real API key.
+About 920 automated tests across 130 files, plus six Maestro device flows. None of
+them call a paid API or need a key.
 
-## Current automated coverage
-
-- Storage downloads require authentication, enforce clinic ownership and reject path traversal.
-- Refresh-token predecessor replay revokes the successor session.
-- Stale logged-out tokens cannot invalidate a later login.
-- SOAP and patient-summary generation require patient AI-processing consent.
-- Session creation cannot directly create a finalized record.
-- Mobile password changes use the backend's authenticated contract.
-- Mobile logout fails closed in memory if SecureStore deletion fails.
-- Offline draft indexing and dead-letter retention limits are covered.
-- Shared profile validation is covered.
-
-This is intentionally a focused regression suite, not a claim of complete product or clinical validation.
+| Suite | Files | Tests | Runner |
+| --- | --- | --- | --- |
+| Backend (`backend/tests`) | 77 | 536 | Vitest + `fastify.inject` |
+| Mobile (`mobile/tests`) | 54 | 385 | Vitest + React Native Testing Library |
+| Shared contracts | 1 | 2 | Vitest |
+| Device flows (`mobile/.maestro`) | 6 flows | | Maestro on an Android emulator |
 
 ## Commands
 
 | Command | What it runs |
 | --- | --- |
-| `npm run verify` | ESLint, TypeScript checking and every committed Vitest suite |
-| `npm run lint` | ESLint across mobile, backend and shared TypeScript |
-| `npm run typecheck` | TypeScript checking across all workspaces |
+| `npm run verify:local` | Expo doctor, Prisma doctor, ESLint, TypeScript, all Vitest suites, and the backend suite again without a database |
 | `npm test` | All Vitest suites |
-| `npm audit` | Dependency advisory audit |
-| `npm run doctor` | Expo project diagnostics |
-| `npm run e2e:android:local` | Optional Maestro flow against an already-running local app |
+| `npm run lint` / `npm run typecheck` | ESLint / TypeScript across the workspaces |
+| `npm run audit:gate` | `npm audit` with documented exceptions; fails on high or critical |
+| `npm run api:tour` | The end-to-end API walkthrough in [api-tour.md](api-tour.md) |
+| `npm run e2e:android:local` | Maestro regression (see [`mobile/.maestro/README.md`](../mobile/.maestro/README.md)) |
+
+## What the security suites pin down
+
+- Storage downloads need auth, stay inside the caller's clinic, and reject encoded
+  `..` traversal.
+- Replaying a rotated refresh token revokes the user's sessions; a stale logout
+  can't kill a newer login.
+- JWTs are verified with a pinned algorithm.
+- Audio upload, transcription and AI drafts all require patient consent.
+- 5xx responses are generic; logs redact tokens, identifiers and clinical text.
+- Sessions can't be created already finalized.
+- Staging/production refuse to boot with local adapters or missing secrets.
 
 ## Continuous integration
 
-`.github/workflows/ci.yml` provisions PostgreSQL 16, runs `npm ci`, applies the committed Prisma migration, then runs type checking, tests and a high-severity dependency audit.
+[`ci.yml`](../.github/workflows/ci.yml) starts a PostgreSQL 16 service, runs
+`npm ci`, the audit gate, `prisma migrate deploy` and the seed, then
+`npm run verify:local` on Node 22.
 
-## Manual checks before publication
+## Not covered
 
-- Run `npm run local:setup` from a clean checkout.
-- Start the backend and verify health, login and an authenticated data request.
-- Build the Android debug APK.
-- With a personal Sarvam key and synthetic data, record a recap and complete transcript, SOAP draft and patient-summary review.
+Real-device audio quality, reconnect timing on flaky networks, and clinical
+accuracy of model output are checked by hand, not by the suite.

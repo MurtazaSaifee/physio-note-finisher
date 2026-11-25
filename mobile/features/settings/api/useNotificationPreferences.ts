@@ -1,7 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type {
-  NotificationPreferenceResponse,
   UpdateNotificationPreferenceRequest,
 } from "../../../../shared/contracts/appointments";
 import { useAuth } from "../../auth/providers/AuthProvider";

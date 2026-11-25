@@ -19,6 +19,11 @@ import type {
   SttProvider,
 } from "../domain/voice/providers/providerTypes.js";
 import { ProviderError } from "../domain/voice/providers/providerErrors.js";
+import {
+  requireQueueUrl,
+  sendPointerMessage,
+  VOICE_QUEUE,
+} from "../infrastructure/sqs/sqsQueues.js";
 import { createLogger } from "../observability/logger.js";
 
 const logger = createLogger({ component: "voiceWorker" });
@@ -76,7 +81,18 @@ function getStageJobId(data: unknown, fallback?: string): string {
   if (fallback?.trim()) {
     return fallback;
   }
-  throw new Error("jobId is required for stage queue messages");
+  throw new Error("jobId is required for SQS stage queue messages");
+}
+
+export function createSqsStageQueue(queueUrl = VOICE_QUEUE): StageQueue {
+  return {
+    async add(name, data, opts) {
+      const targetQueueUrl = requireQueueUrl(queueUrl, "SQS_VOICE_QUEUE_URL");
+      const jobId = getStageJobId(data, opts?.jobId);
+      const result = await sendPointerMessage(targetQueueUrl, { jobType: name, jobId });
+      return { id: result.id ?? jobId };
+    },
+  };
 }
 
 export function createInMemoryStageQueue(): StageQueue {
@@ -197,7 +213,7 @@ export async function processVoicePipelineJob(
       return;
     }
     throw new Error(
-      `JobName ${jobName} does not match queued stage ${jobRecord.stageState ?? "unknown"}`,
+      `SQS jobName ${jobName} does not match queued stage ${jobRecord.stageState ?? "unknown"}`,
     );
   }
 
@@ -219,7 +235,7 @@ export async function processVoicePipelineJob(
         await voiceWorker.completeTranscriptionStage(jobId, clinicId, sttProvider);
         const advanced = await advanceToNextPipelineStage(store, jobId, clinicId);
         if (advanced.stageState === "queued_soap") {
-          await (stageQueue ?? createLocalStageQueue({ store, voiceProviders: undefined })).add(
+          await (stageQueue ?? createSqsStageQueue()).add(
             "soap",
             { jobId, clinicId, uploadId },
             {
@@ -235,7 +251,7 @@ export async function processVoicePipelineJob(
         await voiceWorker.completeSoapStage(jobId, clinicId, clinicalNoteProvider);
         const advanced = await advanceToNextPipelineStage(store, jobId, clinicId);
         if (advanced.stageState === "queued_summary") {
-          await (stageQueue ?? createLocalStageQueue({ store, voiceProviders: undefined })).add(
+          await (stageQueue ?? createSqsStageQueue()).add(
             "summary",
             { jobId, clinicId, uploadId },
             {
@@ -256,9 +272,15 @@ export async function processVoicePipelineJob(
 
     logger.info("voice.worker.job_completed", { jobName, jobId, clinicId });
   } catch (error) {
-    const reason = error instanceof ProviderError
-      ? "Voice provider request failed"
-      : "Voice pipeline job failed";
+    const reason = error instanceof ProviderError && [
+      "spokenly_cli_exec_failed",
+      "spokenly_cli_output_invalid",
+      "spokenly_cli_stderr",
+    ].includes(error.code)
+      ? "Spokenly transcription failed"
+      : error instanceof ProviderError
+        ? "Voice provider request failed"
+        : "Voice pipeline job failed";
     const errorCode =
       error instanceof ProviderError ? "voice_provider_request_failed" : "voice_pipeline_job_failed";
     logger.error("voice.worker.job_failed", {

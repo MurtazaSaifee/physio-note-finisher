@@ -2,7 +2,6 @@ import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
 
 import type {
   CreateManualNoteRequest,
-  ProgressNoteResponse,
   SaveManualNoteRequest,
   TemplateCategory,
 } from "../../../../shared/contracts/notes";
@@ -11,7 +10,7 @@ import {
   patientTimelineQueryKey,
 } from "../../patients/hooks/usePatients";
 import { notesApi } from "../api/notesApi";
-import type { CustomTemplateDto, CustomTemplateCategoryDto } from "../api/notesApi";
+import type { CustomTemplateDto } from "../api/notesApi";
 
 type NoteMutationInput = {
   patientId: string;
@@ -93,14 +92,6 @@ export function conditionTemplatesQueryKeyForFilters(
       ...(filters.limit !== undefined ? { limit: filters.limit } : {}),
     },
   ] as const;
-}
-
-async function invalidateTemplateCaches(queryClient: ReturnType<typeof useQueryClient>): Promise<void> {
-  await Promise.all([
-    queryClient.invalidateQueries({ queryKey: conditionTemplatesQueryKey() }),
-    queryClient.invalidateQueries({ queryKey: customTemplatesQueryKey() }),
-    queryClient.invalidateQueries({ queryKey: templateCategoriesQueryKey() }),
-  ]);
 }
 
 export function useManualNote(patientId?: string, sessionId?: string) {

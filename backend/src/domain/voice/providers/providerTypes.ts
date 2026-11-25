@@ -65,7 +65,7 @@ export interface SttTranscribeOptions {
 export interface SttProvider {
   transcribe(
     audioBuffer: Buffer,
-    options?: SttTranscribeOptions,
+    options: SttTranscribeOptions,
   ): Promise<TranscriptionResult>;
 }
 

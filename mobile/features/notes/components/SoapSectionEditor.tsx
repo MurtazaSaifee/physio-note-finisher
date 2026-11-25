@@ -17,13 +17,6 @@ type SoapSectionEditorProps = {
   testID?: string;
 };
 
-const COLORS = {
-  card: meridian.color.surface,
-  muted: meridian.color.textSubtle,
-  text: meridian.color.text,
-  border: meridian.color.border,
-};
-
 export function SoapSectionEditor({
   label,
   value,

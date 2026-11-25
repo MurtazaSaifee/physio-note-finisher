@@ -31,6 +31,7 @@ type PriorNoteContext = {
 };
 
 function sanitizePromptText(value: string): string {
+  // eslint-disable-next-line no-control-regex -- strips control characters on purpose
   return value.replace(/[\u0000-\u0008\u000B\u000C\u000E-\u001F\u007F]/g, "").trim();
 }
 

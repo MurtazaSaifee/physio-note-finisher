@@ -1,5 +1,4 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { z } from "zod";
 
 import {
   InvalidTranscriptPayloadError,

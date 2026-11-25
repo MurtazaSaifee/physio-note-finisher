@@ -1,5 +1,4 @@
 import Constants from "expo-constants";
-import { Platform } from "react-native";
 
 function isLoopbackHost(host: string): boolean {
   return host === "localhost" || host === "127.0.0.1";
@@ -31,19 +30,19 @@ function isPrivateNetworkHost(hostname: string): boolean {
 }
 
 export function resolveApiBaseUrl(): string {
-  const isAndroid = process.env.EXPO_OS === "android" || Platform.OS === "android";
   const envBaseUrl = process.env.EXPO_PUBLIC_API_BASE_URL?.trim();
   if (envBaseUrl) {
     const sanitizedEnvBaseUrl = sanitizeUrl(envBaseUrl);
     try {
       const parsed = new URL(sanitizedEnvBaseUrl);
       const expoHost = resolveExpoHost();
-      if (isAndroid && isLoopbackHost(parsed.hostname)) {
-        if (expoHost && !isLoopbackHost(expoHost)) {
-          parsed.hostname = expoHost;
-        } else {
-          parsed.hostname = "10.0.2.2";
-        }
+      if (
+        process.env.EXPO_OS === "android" &&
+        isLoopbackHost(parsed.hostname) &&
+        expoHost &&
+        !isLoopbackHost(expoHost)
+      ) {
+        parsed.hostname = expoHost;
         return sanitizeUrl(parsed.toString());
       }
     } catch {
@@ -54,13 +53,16 @@ export function resolveApiBaseUrl(): string {
 
   const expoHost = resolveExpoHost();
   if (expoHost) {
-    if (isAndroid && isLoopbackHost(expoHost)) {
+    if (
+      process.env.EXPO_OS === "android" &&
+      isLoopbackHost(expoHost)
+    ) {
       return "http://10.0.2.2:3000";
     }
     return `http://${expoHost}:3000`;
   }
 
-  if (isAndroid) {
+  if (process.env.EXPO_OS === "android") {
     return "http://10.0.2.2:3000";
   }
 

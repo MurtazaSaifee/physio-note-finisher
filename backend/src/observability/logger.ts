@@ -17,6 +17,7 @@ const REDACTION_KEYS = new Set([
   "addressLine",
   "clinicalNotes",
   "audioUrl",
+  "s3Url",
 ]);
 
 const VISIBLE_METADATA_KEYS = new Set([

@@ -19,6 +19,7 @@ export interface PdfExportHtmlInput {
 }
 
 export function sanitizePdfText(text: string): string {
+  // eslint-disable-next-line no-control-regex -- strips control characters on purpose
   return text.replace(/[\u0000-\u0008\u000b\u000c\u000e-\u001f\u007f]/g, "");
 }
 

@@ -54,6 +54,7 @@ function createRateLimitPreHandler(options: RateLimitOptions): {
     const current = rateCounters.get(key);
 
     if (!current || nowMs - current.windowStartMs >= WINDOW_DURATION_MS) {
+      // Prevent unbounded memory growth: evict oldest entries when cap is reached
       if (rateCounters.size >= MAX_RATE_COUNTER_ENTRIES) {
         const oldestKey = rateCounters.keys().next().value;
         if (oldestKey) {
@@ -98,6 +99,11 @@ function createRateLimiter(options: RateLimitOptions): {
 export function createAuthRateLimitMiddleware(): {
   loginRateLimit: RateLimitPreHandler;
   refreshRateLimit: RateLimitPreHandler;
+  signupRateLimit: RateLimitPreHandler;
+  otpSendRateLimit: RateLimitPreHandler;
+  otpVerifyRateLimit: RateLimitPreHandler;
+  forgotPasswordInitiateRateLimit: RateLimitPreHandler;
+  forgotPasswordResetRateLimit: RateLimitPreHandler;
   llmGenerateRateLimit: RateLimitPreHandler;
   llmRegenerateRateLimit: RateLimitPreHandler;
 };
@@ -107,6 +113,11 @@ export function createAuthRateLimitMiddleware(
 ): {
   loginRateLimit: RateLimitPreHandler;
   refreshRateLimit: RateLimitPreHandler;
+  signupRateLimit: RateLimitPreHandler;
+  otpSendRateLimit: RateLimitPreHandler;
+  otpVerifyRateLimit: RateLimitPreHandler;
+  forgotPasswordInitiateRateLimit: RateLimitPreHandler;
+  forgotPasswordResetRateLimit: RateLimitPreHandler;
   llmGenerateRateLimit: RateLimitPreHandler;
   llmRegenerateRateLimit: RateLimitPreHandler;
 };
@@ -116,6 +127,11 @@ export function createAuthRateLimitMiddleware(
 ): {
   loginRateLimit: RateLimitPreHandler;
   refreshRateLimit: RateLimitPreHandler;
+  signupRateLimit: RateLimitPreHandler;
+  otpSendRateLimit: RateLimitPreHandler;
+  otpVerifyRateLimit: RateLimitPreHandler;
+  forgotPasswordInitiateRateLimit: RateLimitPreHandler;
+  forgotPasswordResetRateLimit: RateLimitPreHandler;
   llmGenerateRateLimit: RateLimitPreHandler;
   llmRegenerateRateLimit: RateLimitPreHandler;
 } {
@@ -128,6 +144,26 @@ export function createAuthRateLimitMiddleware(
   const refreshRateLimit = createRateLimiter({
     keyPrefix: "auth-refresh",
     maxRequestsPerMinute: env.authRefreshRateLimitPerMinute,
+  });
+  const signupRateLimit = createRateLimiter({
+    keyPrefix: "auth-signup",
+    maxRequestsPerMinute: env.authLoginRateLimitPerMinute,
+  });
+  const otpSendRateLimit = createRateLimiter({
+    keyPrefix: "auth-otp-send",
+    maxRequestsPerMinute: env.authLoginRateLimitPerMinute,
+  });
+  const otpVerifyRateLimit = createRateLimiter({
+    keyPrefix: "auth-otp-verify",
+    maxRequestsPerMinute: env.authLoginRateLimitPerMinute,
+  });
+  const forgotPasswordInitiateRateLimit = createRateLimiter({
+    keyPrefix: "auth-forgot-initiate",
+    maxRequestsPerMinute: env.authLoginRateLimitPerMinute,
+  });
+  const forgotPasswordResetRateLimit = createRateLimiter({
+    keyPrefix: "auth-forgot-reset",
+    maxRequestsPerMinute: env.authLoginRateLimitPerMinute,
   });
   const llmGenerateRateLimit = createRateLimiter({
     keyPrefix: "llm-generate",
@@ -142,6 +178,11 @@ export function createAuthRateLimitMiddleware(
     app.addHook("onClose", async () => {
       loginRateLimit.dispose();
       refreshRateLimit.dispose();
+      signupRateLimit.dispose();
+      otpSendRateLimit.dispose();
+      otpVerifyRateLimit.dispose();
+      forgotPasswordInitiateRateLimit.dispose();
+      forgotPasswordResetRateLimit.dispose();
       llmGenerateRateLimit.dispose();
       llmRegenerateRateLimit.dispose();
     });
@@ -150,6 +191,11 @@ export function createAuthRateLimitMiddleware(
   return {
     loginRateLimit: loginRateLimit.preHandler,
     refreshRateLimit: refreshRateLimit.preHandler,
+    signupRateLimit: signupRateLimit.preHandler,
+    otpSendRateLimit: otpSendRateLimit.preHandler,
+    otpVerifyRateLimit: otpVerifyRateLimit.preHandler,
+    forgotPasswordInitiateRateLimit: forgotPasswordInitiateRateLimit.preHandler,
+    forgotPasswordResetRateLimit: forgotPasswordResetRateLimit.preHandler,
     llmGenerateRateLimit: llmGenerateRateLimit.preHandler,
     llmRegenerateRateLimit: llmRegenerateRateLimit.preHandler,
   };

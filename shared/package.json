@@ -4,11 +4,11 @@
   "private": true,
   "type": "module",
   "scripts": {
-    "lint": "eslint \"**/*.ts\"",
+    "lint": "eslint .",
     "typecheck": "tsc --noEmit",
     "test": "vitest run"
   },
   "dependencies": {
-    "zod": "^3.25.76"
+    "zod": "^4.6.7"
   }
 }

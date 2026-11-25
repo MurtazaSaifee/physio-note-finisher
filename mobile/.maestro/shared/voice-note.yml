@@ -1,43 +1,32 @@
 appId: ${APP_ID}
 ---
+# Voice recap -> transcript -> SOAP draft -> patient summary -> finalize -> export.
+# Locally the backend uses the offline demo speech-to-text and SOAP providers,
+# so the generated text is deterministic.
 - runFlow:
     label: Sign in
-    file: ../shared/signin.yml
+    file: signin.yml
+- scrollUntilVisible:
+    element:
+      text: Open patient record for Karthik Reddy.*
+    direction: DOWN
+    timeout: 20000
 - tapOn:
-    id: dashboard-create-session-button
-- evalScript: ${output.patientName = 'Maestro Voice ' + Date.now() + '-' + Math.floor(Math.random() * 1000)}
+    text: Open patient record for Karthik Reddy.*
 - tapOn:
-    id: select-patient-add-new-patient-button
-- assertVisible:
-    id: select-patient-fullname-input
+    id: patient-profile-new-session-button
 - tapOn:
-    id: select-patient-fullname-input
-- inputText: ${output.patientName}
-- tapOn:
-    id: select-patient-phone-input
-- inputText: 555-0120
-- tapOn:
-    id: select-patient-condition-tags-input
-- inputText: shoulder, post-op
-- tapOn:
-    id: select-patient-add-new-patient-button
-- assertVisible:
-    id: start-session-blank-note-card
-- tapOn:
-    id: start-session-blank-note-card
-- assertVisible:
-    id: voice-capture-start-recording-button
+    id: start-session-voice-recap-button
 - tapOn:
     id: voice-capture-start-recording-button
+- tapOn:
+    text: While using the app
+    optional: true
 - assertVisible:
     id: voice-capture-stop-button
-- waitForAnimationToEnd:
-    timeout: 3000
 - runScript: wait-for-voice-duration.js
 - tapOn:
     id: voice-capture-stop-button
-- assertVisible:
-    id: voice-capture-upload-button
 - tapOn:
     id: voice-capture-upload-button
 - tapOn:
@@ -47,94 +36,51 @@ appId: ${APP_ID}
     visible:
       id: transcript-review-generate-soap-button
     timeout: 60000
-- assertVisible:
-    id: transcript-review-edit-button
-- tapOn:
-    id: transcript-review-edit-button
-- assertVisible:
-    id: transcript-review-edit-input
-- tapOn:
-    id: transcript-review-edit-input
-- longPressOn:
-    id: transcript-review-edit-input
-- eraseText: 100
-- inputText: Maestro transcript updated
-- back
-- assertVisible:
-    id: transcript-review-save-button
-- tapOn:
-    id: transcript-review-save-button
-- assertVisible:
-    id: transcript-review-generate-soap-button
+- assertVisible: .*ACL reconstruction.*
 - tapOn:
     id: transcript-review-generate-soap-button
-- scrollUntilVisible:
-    element:
-      id: note-save-draft-button
-    direction: DOWN
-    timeout: 20000
-- assertVisible:
-    id: note-save-draft-button
-- tapOn:
-    id: note-save-draft-button
-- scrollUntilVisible:
-    element:
-      id: note-regenerate-plan-button
-    direction: UP
-    timeout: 20000
-- assertVisible:
-    id: note-regenerate-plan-button
-- tapOn:
-    id: note-regenerate-plan-button
-- assertVisible:
-    id: note-generate-summary-button
-- tapOn:
-    id: note-generate-summary-button
-- assertVisible:
-    id: note-save-summary-button
-- tapOn:
-    id: note-save-summary-button
-- scrollUntilVisible:
-    element:
-      id: note-finalize-action-button
-    direction: DOWN
-    timeout: 20000
-- assertVisible:
-    id: note-finalize-action-button
-- tapOn:
-    id: note-finalize-action-button
 - extendedWaitUntil:
     visible:
-      id: note-confirm-action-button
-    timeout: 10000
+      id: note-continue-final-review-button
+    timeout: 60000
+- assertVisible: .*Knee flexion 120.*
+- tapOn:
+    id: note-continue-final-review-button
+- extendedWaitUntil:
+    visible:
+      id: note-finalize-action-button
+    timeout: 30000
+- assertVisible: .*Your knee is healing well.*
+- tapOn:
+    id: note-finalize-action-button
 - tapOn:
     id: note-confirm-action-button
+- extendedWaitUntil:
+    visible: Note finalized.
+    timeout: 20000
 - scrollUntilVisible:
     element:
       id: note-export-share-button
     direction: DOWN
     timeout: 20000
-- assertVisible:
-    id: note-export-share-button
 - tapOn:
     id: note-export-share-button
-- assertVisible:
-    id: export-share-full-note-mode-chip
-- tapOn:
-    id: export-share-copy-note-button
+- extendedWaitUntil:
+    visible:
+      id: export-share-full-note-mode-chip
+    timeout: 20000
+- scrollUntilVisible:
+    element:
+      id: export-share-export-pdf-button
+    direction: DOWN
+    timeout: 20000
 - tapOn:
     id: export-share-export-pdf-button
-- assertVisible: Saved
-- tapOn:
-    text: OK
+- extendedWaitUntil:
+    visible: Saved
+    timeout: 60000
+- tapOn: OK
 - tapOn:
     id: export-share-patient-summary-mode-chip
 - assertVisible:
     id: export-share-share-summary-text-button
-- back
-- assertVisible:
-    id: note-back-button
-- tapOn:
-    id: note-back-button
-- assertVisible:
-    id: voice-capture-start-recording-button

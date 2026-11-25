@@ -1,16 +1,13 @@
 import "dotenv/config";
-import { defineConfig } from "prisma/config";
+import { defineConfig, env } from "prisma/config";
 
-const localDatabaseUrl =
-  "postgresql://physio_dev:physio_dev_pass@localhost:5432/physio_note_finisher";
+type Env = {
+  DATABASE_URL: string;
+};
 
 export default defineConfig({
   schema: "prisma/schema.prisma",
-  migrations: {
-    path: "prisma/migrations",
-    seed: "tsx prisma/seed.ts",
-  },
   datasource: {
-    url: process.env.DATABASE_URL?.trim() || localDatabaseUrl,
+    url: env<Env>("DATABASE_URL"),
   },
 });

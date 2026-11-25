@@ -4,20 +4,17 @@ appId: ${APP_ID}
     label: Auth smoke
     file: ../shared/auth-smoke.yml
 - runFlow:
-    label: Dashboard nav
-    file: ../shared/dashboard-nav.yml
+    label: App navigation
+    file: ../shared/app-nav.yml
 - runFlow:
     label: Settings core
     file: ../shared/settings-core.yml
 - runFlow:
-    label: Local Google Calendar
-    file: ../shared/settings-local.yml
-- runFlow:
-    label: Appointment flow
+    label: Patient and appointment
     file: ../shared/create-patient-appointment.yml
 - runFlow:
-    label: Voice flow
+    label: Voice note and export
     file: ../shared/voice-note.yml
 - runFlow:
-    label: Manual note and export flow
+    label: Manual note and export
     file: ../shared/manual-note-export.yml

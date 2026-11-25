@@ -1,68 +1,54 @@
-# Maestro E2E Testing
+# Maestro end-to-end flows
 
-This directory holds the Android E2E flows for Physio Note Finisher.
+Android UI flows that drive the real app against the local backend.
 
-## What It Covers
+| Flow | What it covers |
+| --- | --- |
+| `shared/auth-smoke.yml` | Sign-in screen, forgot-password screen and back |
+| `shared/app-nav.yml` | Sign in, then Patients → Calendar → Profile → Patients |
+| `shared/settings-core.yml` | Profile edit, change-password entry, audio retention policy |
+| `shared/create-patient-appointment.yml` | New patient → schedule a visit → start the session |
+| `shared/voice-note.yml` | Voice recap → transcript → SOAP draft → summary → finalize → PDF export |
+| `shared/manual-note-export.yml` | Manual SOAP note (no AI) → finalize → PDF export |
 
-- `mobile/.maestro/local/regression.yml`: local database plus non-AWS service path.
-- `mobile/.maestro/staging/regression.yml`: optional staging path for local Maestro use.
-- Shared flows live in `mobile/.maestro/shared/`.
+`local/regression.yml` runs them all in that order.
 
-## Local E2E Setup
+The flows select elements by `testID` (see the testID rules in `AGENTS.md`). With
+no `SARVAM_API_KEY`, the backend uses the offline demo providers, so the voice flow
+gets the same transcript and SOAP text every run.
 
-Use the local Maestro suite when you want to verify the app end to end against local services.
+## Running locally
 
-For the Maestro emulator path, make sure all of these are true first:
-
-- the backend is running and reachable on `http://localhost:3000` or `http://localhost:3001`
-- Metro is running and reachable on `http://localhost:8081`
-- the Android emulator is booted and the app is installed on it
-- the dev clinician credentials exist: `clinician@example.com` / `password123`
-- the voice flow intentionally records long enough to satisfy the backend minimum of 5 seconds before upload
-
-Minimal local boot sequence:
-
-```bash
-# backend
-cd backend && npm run dev
-
-# Metro
-cd mobile && EXPO_PUBLIC_API_BASE_URL=http://localhost:3000 npm run start -- --lan
-
-# if needed, install the debug app on the emulator
-cd mobile && npm run android
-
-# reverse ports for the emulator
-adb reverse tcp:8081 tcp:8081
-adb reverse tcp:3000 tcp:3000
-```
-
-If port `3000` is busy, use `3001` in both the backend and Metro commands and reverse that port too.
-
-For phone-based local smoke testing, use `scripts/phone-wireless-dev-up.sh` and `scripts/phone-wireless-dev-down.sh` from the repo root.
-
-Run the local suite:
+Prerequisites: [Maestro](https://maestro.mobile.dev), an Android emulator, and the
+app built once with `npm run android`.
 
 ```bash
+# 1. Database + seed (once)
+npm run setup
+
+# 2. Backend on :3000
+npm run dev
+
+# 3. Metro (in another terminal). mobile/.env points the emulator at 10.0.2.2:3000
+cd mobile && npx expo start
+
+# 4. The suite
 npm run e2e:android:local
 ```
 
-### Local Logs and Artifacts
+The flows sign in as the seeded `clinician@example.com` / `password123`. Override
+with `LOGIN_EMAIL` and `LOGIN_PASSWORD`.
 
-- Backend log: `/tmp/backend.log`
-- Metro log: `/tmp/expo.log`
-- Maestro run output: `~/.maestro/tests/<timestamp>/`
-- Maestro log: `~/.maestro/tests/<timestamp>/maestro.log`
-- Failure screenshot: `~/.maestro/tests/<timestamp>/screenshot-*.png`
+## Troubleshooting
 
-## Common Gotchas
-
-- The appointment flow is intentionally based on stable test IDs, not loose text matches.
-- If a filled field is hard to clear, the flows usually use long-press plus erase before retyping.
-- If the keyboard hides a button, hide the keyboard before scrolling or tapping again.
-- The shared voice flow waits 6 seconds before stopping recording so the local upload endpoint accepts the clip.
-
-## Related Docs
-
-- `.agents/skills/android-phone-local-testing/SKILL.md` when that local skill is available
-- `docs/development/local-android-dev-and-e2e.md`
+- **`device offline` / `Device server died` mid-run.** The emulator's adb link has
+  dropped. Make sure only one adb version is on your `PATH` (two different adb
+  versions keep restarting each other's server), then cold-boot the emulator.
+- **Sign-in fails with "Network request failed".** The app is not reaching the API.
+  A `mobile/.env.local` overrides `mobile/.env`. On the emulator, either use
+  `http://10.0.2.2:3000`, or keep `localhost` and run
+  `adb reverse tcp:3000 tcp:3000` (repeat it after any adb restart). The app shows
+  the generic sign-in error in this case, and the API logs no login request.
+- **Keyboard or stylus pop-ups cover elements.** Turn off Gboard's stylus
+  handwriting: `adb shell settings put secure stylus_handwriting_enabled 0`.
+- Artifacts for each run (screenshots, `maestro.log`) are in `~/.maestro/tests/<timestamp>/`.

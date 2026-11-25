@@ -42,7 +42,7 @@ export function TemplateEditorScreen({
   const [plan, setPlan] = useState(initialSections.plan);
   const [newCategory, setNewCategory] = useState("");
   const [showDiscard, setShowDiscard] = useState(false);
-  const [isDiscarding, setIsDiscarding] = useState(false);
+  const [isDiscarding] = useState(false);
 
   const categoryQuery = useTemplateCategories();
   const createMutation = useCreateCustomTemplate();

@@ -15,10 +15,7 @@ import {
   sendInvalidPayload,
 } from "../middleware/common.js";
 import { createAuthRateLimitMiddleware } from "../middleware/rateLimit.js";
-import {
-  assertPatientAiConsent,
-  PatientConsentRequiredError,
-} from "../../domain/voice/voiceConsentService.js";
+import { requirePatientAiConsent } from "../middleware/requirePatientAiConsent.js";
 
 async function authorizeSoapGenerationAccess(
   request: FastifyRequest,
@@ -32,85 +29,43 @@ async function authorizeSoapGenerationAccess(
   await authorizeClinic(request, reply);
 }
 
-function isSarvamConfigured(): boolean {
-  return Boolean(process.env.SARVAM_API_KEY?.trim());
-}
-
-function sendSarvamNotConfigured(reply: FastifyReply): FastifyReply {
-  return reply.code(503).send({
-    code: "sarvam_not_configured",
-    message: "Configure SARVAM_API_KEY to use AI features.",
-  });
-}
-
-async function requirePatientAiConsent(
-  clinicId: string,
-  patientId: string,
-  reply: FastifyReply,
-): Promise<boolean> {
-  try {
-    await assertPatientAiConsent({ clinicId, patientId });
-    return true;
-  } catch (error) {
-    if (error instanceof PatientConsentRequiredError) {
-      await reply.code(403).send({ error: error.errorCode });
-      return false;
-    }
-    throw error;
-  }
-}
-
 export function registerSoapGenerationRoutes(
   app: FastifyInstance,
   provider?: ClinicalNoteProvider,
 ): void {
   const rateLimits = createAuthRateLimitMiddleware(app);
 
-  const handleGenerateSoap = async (request: FastifyRequest, reply: FastifyReply) => {
-    if (!isSarvamConfigured()) {
-      return sendSarvamNotConfigured(reply);
-    }
-
-    const body = parseOrBadRequest(soapGenerationBodySchema, request.body ?? {});
-    if (!body.success) {
-      return sendInvalidPayload(reply, "Invalid voice payload", body.issues);
-    }
-
-    const authenticated = request as AuthenticatedRequest;
-    if (
-      !(await requirePatientAiConsent(
-        authenticated.auth.clinicId,
-        body.data.patientId,
-        reply,
-      ))
-    ) {
-      return;
-    }
-
-    const data = await generateSoapDraft({
-      clinicId: authenticated.auth.clinicId,
-      patientId: body.data.patientId,
-      userId: authenticated.auth.sub,
-      sessionId: body.data.sessionId,
-      transcriptText: body.data.transcriptText,
-      provider,
-    });
-
-    return reply.send({ success: true, data });
-  };
-
-  app.route({
-    method: "POST",
-    url: "/api/v1/notes/generate-soap",
-    preHandler: [authorizeSoapGenerationAccess, rateLimits.llmGenerateRateLimit],
-    handler: handleGenerateSoap,
-  });
-
   app.route({
     method: "POST",
     url: "/api/v1/voice/soap/generate",
     preHandler: [authorizeSoapGenerationAccess, rateLimits.llmGenerateRateLimit],
-    handler: handleGenerateSoap,
+    async handler(request, reply) {
+      const body = parseOrBadRequest(soapGenerationBodySchema, request.body ?? {});
+      if (!body.success) {
+        return sendInvalidPayload(reply, "Invalid voice payload", body.issues);
+      }
+
+      const authenticated = request as AuthenticatedRequest;
+      if (
+        !(await requirePatientAiConsent(
+          authenticated.auth.clinicId,
+          body.data.patientId,
+          reply,
+        ))
+      ) {
+        return;
+      }
+      const data = await generateSoapDraft({
+        clinicId: authenticated.auth.clinicId,
+        patientId: body.data.patientId,
+        userId: authenticated.auth.sub,
+        sessionId: body.data.sessionId,
+        transcriptText: body.data.transcriptText,
+        provider,
+      });
+
+      return reply.send({ success: true, data });
+    },
   });
 
   app.route({
@@ -118,10 +73,6 @@ export function registerSoapGenerationRoutes(
     url: "/api/v1/voice/soap/regenerate-section",
     preHandler: [authorizeSoapGenerationAccess, rateLimits.llmRegenerateRateLimit],
     async handler(request, reply) {
-      if (!isSarvamConfigured()) {
-        return sendSarvamNotConfigured(reply);
-      }
-
       const body = parseOrBadRequest(soapSectionRegenerationBodySchema, request.body ?? {});
       if (!body.success) {
         return sendInvalidPayload(reply, "Invalid voice payload", body.issues);
@@ -137,7 +88,6 @@ export function registerSoapGenerationRoutes(
       ) {
         return;
       }
-
       const note = await getManualNote({
         clinicId: authenticated.auth.clinicId,
         patientId: body.data.patientId,

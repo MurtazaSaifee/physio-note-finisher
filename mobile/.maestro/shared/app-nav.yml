@@ -1,0 +1,22 @@
+appId: ${APP_ID}
+---
+# Bottom navigation: Patients -> Calendar -> Profile -> Patients.
+- runFlow:
+    label: Sign in
+    file: signin.yml
+- assertVisible:
+    id: patient-list-add-patient-button
+- tapOn:
+    id: bottom-nav-calendar
+- assertVisible:
+    id: calendar-add-appointment-button
+- assertVisible:
+    id: calendar-selected-date-button
+- tapOn:
+    id: bottom-nav-profile
+- assertVisible:
+    id: settings-save-button
+- tapOn:
+    id: bottom-nav-patients
+- assertVisible:
+    id: patient-list-search-input
