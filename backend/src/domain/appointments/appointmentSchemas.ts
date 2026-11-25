@@ -1,5 +1,7 @@
 import { z } from "zod";
 
+const syncStatusSchema = z.enum(["manual", "synced", "pending", "failed"]);
+
 const optionalTextSchema = z
   .string()
   .trim()
@@ -13,6 +15,8 @@ export const createAppointmentSchema = z.object({
   scheduledAt: z.string().datetime({ offset: true }),
   durationMinutes: z.number().int().min(1).max(480),
   notes: optionalTextSchema.optional().nullable(),
+  syncStatus: syncStatusSchema.optional(),
+  googleEventId: z.string().trim().min(1).optional().nullable(),
 }).strict();
 
 export const updateAppointmentSchema = z.object({

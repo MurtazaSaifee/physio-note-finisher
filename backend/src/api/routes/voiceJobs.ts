@@ -1,5 +1,4 @@
 import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
-import { z } from "zod";
 
 import {
   getVoiceJobStatus,
@@ -12,7 +11,7 @@ import {
   type VoiceJobStore,
 } from "../../domain/voice/voiceJobService.js";
 import { deleteAudioAndTranscript } from "../../domain/audio/retentionService.js";
-import { deleteObject } from "../../infrastructure/storage/localStorageProvider.js";
+import { deleteObject } from "../../infrastructure/s3/s3Client.js";
 import {
   retryVoiceJobBodySchema,
   updateTranscriptBodySchema,
@@ -177,7 +176,7 @@ export function registerVoiceJobRoutes(
         jobId: params.data.jobId,
         clinicId: authenticated.auth.clinicId,
         store: jobStore,
-        deleteStoredObject: deleteObject,
+        s3DeleteObject: deleteObject,
       });
 
       if (!result.success) {

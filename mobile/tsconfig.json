@@ -5,5 +5,9 @@
     "moduleResolution": "Bundler",
     "jsx": "react-jsx"
   },
-  "include": ["app", "features", "App.tsx", "index.tsx"]
+  "include": [
+    "app",
+    "features",
+    "App.tsx"
+  ]
 }

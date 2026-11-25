@@ -1,13 +1,22 @@
-# Case study: offline draft resilience
+# Case study: offline drafts on a phone
 
-The mobile application stores draft SOAP sections and queued mutations through Expo SecureStore. Connectivity monitoring triggers queued synchronization when the API becomes reachable again.
+**Problem.** Clinic Wi-Fi drops. A note written during a dead spot must not vanish,
+and clinical text left on a shared phone must not outlive the session.
 
-The design makes several bounded guarantees:
+**Design** ([`queueStore.ts`](../../mobile/features/offline/storage/queueStore.ts),
+[`syncService.ts`](../../mobile/features/offline/services/syncService.ts)):
 
-- Draft payloads are indexed before being written so cleanup can discover partial saves.
-- Queued changes are bounded to prevent unlimited local growth.
-- Failed mutations retained for inspection or retry are capped at 100 records and age out after 30 days.
-- Logout clears in-memory access first, revokes the server session when reachable, and performs best-effort cleanup of refresh tokens, drafts and queues.
-- SecureStore chunks are overwritten before asynchronous deletion so failed deletion does not leave the clinical payload behind.
+- Drafts and queued mutations are stored in Expo SecureStore (Android Keystore
+  backed), chunked to fit its value limit.
+- A draft's id is indexed *before* its payload is written, so cleanup can always
+  find partial writes.
+- Connectivity changes trigger replay of the queue. The UI shows pending and
+  failed changes instead of pretending they synced.
+- Failed mutations move to a dead-letter list capped at 100 records that ages out
+  after 30 days.
+- Logout clears in-memory auth first, revokes the server session when reachable,
+  then removes tokens, drafts and queues. Chunks are overwritten before the
+  asynchronous delete, so a failed delete doesn't leave clinical text behind.
 
-The repository does not claim zero data loss, a fixed reconnection latency or measured storage sizes; those require device-specific validation beyond the committed regression suite.
+**Limits.** No claim of zero data loss or a fixed reconnect time; those need
+device-level testing beyond the committed suite. Voice and AI stay online-only.

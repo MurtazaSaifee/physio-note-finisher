@@ -2,6 +2,15 @@ export type AppointmentStatus = "upcoming" | "completed" | "cancelled" | "missed
 
 export type ReminderTimingOption = "30m" | "1h" | "2h" | "1d";
 
+export type SyncStatus = "manual" | "synced" | "pending" | "failed";
+
+export interface GoogleCalendarConnectionResponse {
+  connected: boolean;
+  accountEmail: string | null;
+  lastSyncedAt: string | null;
+  syncState: "connected" | "needs_attention" | "disconnected";
+}
+
 export interface AppointmentDetailResponse {
   id: string;
   clinicId: string;
@@ -13,6 +22,9 @@ export interface AppointmentDetailResponse {
   linkedSessionId: string | null;
   reminderText: string;
   notes: string | null;
+  syncStatus: SyncStatus;
+  syncedAt: string | null;
+  googleEventId: string | null;
   createdAt: string;
   updatedAt: string;
 }
@@ -23,6 +35,8 @@ export interface CreateAppointmentRequest {
   scheduledAt: string;
   durationMinutes: number;
   notes?: string | null | undefined;
+  syncStatus?: SyncStatus | undefined;
+  googleEventId?: string | null | undefined;
 }
 
 export interface UpdateAppointmentRequest {
@@ -64,4 +78,15 @@ export interface NotificationPreferenceResponse {
 export interface UpdateNotificationPreferenceRequest {
   defaultReminderTiming: ReminderTimingOption;
   pushEnabled: boolean;
+}
+
+export interface RegisterPushTokenRequest {
+  expoPushToken: string;
+  deviceId: string;
+}
+
+export interface PushTokenResponse {
+  id: string;
+  expoPushToken: string;
+  deviceId: string;
 }

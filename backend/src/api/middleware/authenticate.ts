@@ -1,4 +1,4 @@
-import type { FastifyInstance, FastifyReply, FastifyRequest } from "fastify";
+import type { FastifyReply, FastifyRequest } from "fastify";
 import jwt from "jsonwebtoken";
 
 import type { JwtClaims } from "../../../../shared/contracts/auth.js";
@@ -73,7 +73,7 @@ export async function authenticate(
   const securityEnv = parseSecurityEnv();
 
   try {
-    const decoded = jwt.verify(token, securityEnv.jwtAccessSecret);
+    const decoded = jwt.verify(token, securityEnv.jwtAccessSecret, { algorithms: ["HS256"] });
     const claims = toJwtClaims(decoded);
 
     if (!claims) {
@@ -104,6 +104,15 @@ export async function authenticate(
       user.tokenVersion !== claims.tokenVersion
     ) {
       await reply.code(401).send({ error: "Unauthorized" });
+      return;
+    }
+
+    if (!user.emailVerified) {
+      await reply.code(403).send({
+        error: "email_verification_required",
+        email: user.email,
+        otpRequired: true,
+      });
       return;
     }
 

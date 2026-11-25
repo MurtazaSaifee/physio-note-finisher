@@ -1,6 +1,5 @@
 import type {
   PatientConsentRecord,
-  PatientConsentRequest,
   PatientConsentSource,
 } from "../../../../shared/contracts/voice.js";
 import { prisma } from "../../data/prismaClient.js";

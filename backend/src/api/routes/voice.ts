@@ -8,11 +8,10 @@ import {
 } from "../../domain/voice/voiceUploadService.js";
 import {
   defaultStore,
-  enqueueTranscriptionJob,
   findVoiceJobByUploadId,
   type VoiceJobStore,
 } from "../../domain/voice/voiceJobService.js";
-import { getObject } from "../../infrastructure/storage/localStorageProvider.js";
+import { getObject } from "../../infrastructure/s3/s3Client.js";
 import {
   voiceUploadCompleteParamsSchema,
   voiceUploadCompleteRequestSchema,
@@ -46,21 +45,13 @@ async function authorizeVoiceAccess(
   await authorizeClinic(request, reply);
 }
 
+
+const MAX_VOICE_UPLOAD_BYTES = 25 * 1024 * 1024;
 const patientConsentRequestSchema = z.object({
   patientId: z.string().trim().min(1),
   consentTextVersion: z.string().trim().min(1),
 });
 
-function isSarvamConfigured(): boolean {
-  return Boolean(process.env.SARVAM_API_KEY?.trim());
-}
-
-function sendSarvamNotConfigured(reply: FastifyReply): FastifyReply {
-  return reply.code(503).send({
-    code: "sarvam_not_configured",
-    message: "Configure SARVAM_API_KEY to use AI features.",
-  });
-}
 
 function registerAudioContentTypeParsers(app: FastifyInstance): void {
   const audioTypes = ["audio/m4a", "audio/mp4", "audio/mpeg", "audio/wav", "application/octet-stream"];
@@ -77,56 +68,6 @@ export function registerVoiceRoutes(
   store?: VoiceJobStore,
 ): void {
   registerAudioContentTypeParsers(app);
-
-  // ── AI Endpoint: POST /api/v1/voice/process ──
-  app.route({
-    method: "POST",
-    url: "/api/v1/voice/process",
-    preHandler: [authorizeVoiceAccess],
-    async handler(request, reply) {
-      if (!isSarvamConfigured()) {
-        return sendSarvamNotConfigured(reply);
-      }
-
-      const body = parseOrBadRequest(voiceUploadRequestSchema, request.body, "process");
-      if (!body.success) {
-        return sendInvalidPayload(reply, "Invalid voice payload", body.issues);
-      }
-
-      const jobStore = store ?? defaultStore;
-      const authenticated = request as AuthenticatedRequest;
-
-      try {
-        await assertPatientAiConsent({
-          clinicId: body.data.clinicId,
-          patientId: body.data.patientId,
-        });
-      } catch (error) {
-        if (error instanceof PatientConsentRequiredError) {
-          return reply.code(403).send({ error: error.errorCode });
-        }
-        throw error;
-      }
-
-      const session = await createVoiceUploadSession(body.data);
-      const job = await enqueueTranscriptionJob(jobStore, {
-        clinicId: authenticated.auth.clinicId,
-        patientId: body.data.patientId,
-        uploadId: session.uploadId,
-        storageKey: session.storageKey,
-      });
-
-      if (queue) {
-        await queue.add(
-          "transcription",
-          { jobId: job.jobId, clinicId: authenticated.auth.clinicId, uploadId: session.uploadId },
-          { jobId: `${job.jobId}-transcription` },
-        );
-      }
-
-      return reply.code(200).send({ success: true, data: { jobId: job.jobId, uploadId: session.uploadId, status: job.status } });
-    },
-  });
 
   app.route({
     method: "POST",
@@ -155,9 +96,12 @@ export function registerVoiceRoutes(
     },
   });
 
+  // Local/dev fallback for environments without S3 presigned uploads.
   app.route({
     method: "PUT",
     url: "/api/v1/voice/uploads/:uploadId/binary",
+    // Match the 25 MB ceiling in voiceUploadRequestSchema (Fastify defaults to 1 MiB).
+    bodyLimit: MAX_VOICE_UPLOAD_BYTES,
     preHandler: [authorizeVoiceAccess],
     async handler(request, reply) {
       const params = parseOrBadRequest(
@@ -188,6 +132,8 @@ export function registerVoiceRoutes(
     },
   });
 
+  // Local/dev playback fallback for Expo Go. S3 deployments use presigned URLs;
+  // local mode needs an HTTP URL the physical phone can stream from.
   app.route({
     method: "GET",
     url: "/api/v1/voice/uploads/:uploadId/binary",
@@ -256,10 +202,6 @@ export function registerVoiceRoutes(
           return reply.code(403).send({ error: error.errorCode });
         }
         throw error;
-      }
-
-      if (!isSarvamConfigured()) {
-        return sendSarvamNotConfigured(reply);
       }
 
       const data = await completeVoiceUploadSession(body.data, queue, store);

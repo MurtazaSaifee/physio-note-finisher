@@ -7,7 +7,7 @@ import { buildSummarySystemPrompt, buildSummaryUserPrompt } from "../prompts/pat
 
 const SARVAM_CHAT_URL = "https://api.sarvam.ai/v1/chat/completions";
 
-const SARVAM_MODEL = "sarvam-30b";
+const SARVAM_MODEL = "sarvam-105b";
 const SARVAM_TEMPERATURE = 0.2;
 
 const patientSummaryDraftSchema = z.object({

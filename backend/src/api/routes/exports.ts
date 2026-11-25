@@ -22,7 +22,7 @@ import {
   parseOrBadRequest,
   sendInvalidPayload,
 } from "../middleware/common.js";
-import { createPresignedDownloadUrl } from "../../infrastructure/storage/localStorageProvider.js";
+import { createPresignedDownloadUrl } from "../../infrastructure/s3/s3Client.js";
 import { prisma } from "../../data/prismaClient.js";
 
 function readCorrelationId(

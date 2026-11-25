@@ -1,3 +1,4 @@
+import { normalizeApiKey } from "../../../config/env.js";
 import { resolveVoiceProviderConfig } from "../providerMatrixConfig.js";
 import type {
   ClinicalNoteProvider,
@@ -37,7 +38,7 @@ export function resolveVoiceProviders(
     throw new Error(`Unsupported voice provider: ${config.provider}`);
   }
 
-  const apiKey = source.SARVAM_API_KEY?.trim();
+  const apiKey = normalizeApiKey(source.SARVAM_API_KEY);
   if (!apiKey) {
     return undefined;
   }

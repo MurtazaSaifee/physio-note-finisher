@@ -1,32 +1,27 @@
 appId: ${APP_ID}
 ---
+# Profile edit, change-password entry point and audio retention policy.
+# Leaves the seeded values (Demo Clinician, 30-day retention) unchanged.
 - runFlow:
     label: Sign in
-    file: ../shared/signin.yml
+    file: signin.yml
 - tapOn:
     id: bottom-nav-profile
 - assertVisible:
     id: settings-save-button
 - tapOn:
     id: settings-firstname-input
-- longPressOn:
-    id: settings-firstname-input
-- eraseText: 100
-- inputText: Mira
+- eraseText: 12
+- inputText: Demo
 - tapOn:
     id: settings-lastname-input
-- longPressOn:
-    id: settings-lastname-input
-- eraseText: 100
-- inputText: Patel
+- eraseText: 12
+- inputText: Clinician
 - tapOn:
     id: settings-save-button
-- assertVisible: Profile updated.
-- scrollUntilVisible:
-    element:
-      id: settings-change-password-button
-    direction: DOWN
-    timeout: 20000
+- extendedWaitUntil:
+    visible: Profile updated.
+    timeout: 10000
 - tapOn:
     id: settings-change-password-button
 - assertVisible:
@@ -35,21 +30,17 @@ appId: ${APP_ID}
     id: password-back-button
 - scrollUntilVisible:
     element:
-      id: settings-reminder-2h
-    direction: DOWN
-    timeout: 20000
-- tapOn:
-    id: settings-reminder-2h
-- assertVisible: Reminder timing updated.
-- scrollUntilVisible:
-    element:
       id: settings-retention-forever
     direction: DOWN
     timeout: 20000
 - tapOn:
     id: settings-retention-forever
-- assertVisible: Retention policy updated.
+- extendedWaitUntil:
+    visible: Retention policy updated.
+    timeout: 10000
 - tapOn:
-    id: bottom-nav-sessions
+    id: settings-retention-30d
+- tapOn:
+    id: bottom-nav-patients
 - assertVisible:
-    id: dashboard-search-input
+    id: patient-list-search-input

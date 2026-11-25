@@ -1,0 +1,22 @@
+[
+  {
+    "package": "expo",
+    "reason": "Flagged only through its bundled CLI/config tooling (@expo/cli, @expo/config*). Build-time only; nothing here is shipped in the app binary or used by the API. Fixed by the Expo SDK 58 upgrade.",
+    "expires": "2027-03-01"
+  },
+  {
+    "package": "@expo/cli",
+    "reason": "Development/build CLI (glob, zod 3 and config plugins inside it). Not bundled into the app or deployed with the API. Fixed by the Expo SDK 58 upgrade.",
+    "expires": "2027-03-01"
+  },
+  {
+    "package": "zod",
+    "reason": "Only the zod 3 copy nested inside @expo/cli is affected; the app, API and shared contracts use zod 4.6.7+. Cleared by the Expo SDK 58 upgrade.",
+    "expires": "2027-03-01"
+  },
+  {
+    "package": "image-size",
+    "reason": "Used by Metro at bundle time to read the repository's own image assets; never parses untrusted input. No 1.x fix exists; cleared when Metro moves to image-size 2.",
+    "expires": "2027-03-01"
+  }
+]

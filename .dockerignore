@@ -1,0 +1,20 @@
+# Only backend/, shared/ and the root manifests are copied into the API image.
+# Everything else, and every env file, stays out of the build context.
+**/node_modules
+**/.env
+**/.env.*
+!**/.env.example
+**/tmp
+**/dist
+mobile/android
+mobile/.expo
+mobile/releases
+infra
+reports
+.planning
+.codex
+.agents
+.git
+**/*.apk
+**/*.log
+backend/tests

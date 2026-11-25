@@ -7,6 +7,9 @@ import * as SecureStore from "expo-secure-store";
 import { SafeAreaProvider } from "react-native-safe-area-context";
 
 import { SignInScreen } from "./app/(auth)/sign-in";
+import { SignUpScreen } from "./app/(auth)/sign-up";
+import { VerifyEmailOtpScreen } from "./app/(auth)/verify-email-otp";
+import { ForgotPasswordScreen } from "./app/(auth)/forgot-password";
 import { ClinicalSettingsScreen } from "./app/(app)/settings";
 import { PasswordChangeScreen } from "./app/(app)/settings/password";
 import { useGetProfile } from "./features/settings/api/useGetProfile";
@@ -16,7 +19,10 @@ import {
   useAuth,
   type ProviderSessionManager,
 } from "./features/auth/providers/AuthProvider";
-import { createAuthApi } from "./features/auth/services/authApi";
+import {
+  createAuthApi,
+  isEmailVerificationRequiredError,
+} from "./features/auth/services/authApi";
 import { SessionManager } from "./features/auth/services/sessionManager";
 import {
   ManualSoapComposerScreen,
@@ -68,6 +74,12 @@ type ScreenKey =
   | "export-share"
   | "read-only-preview"
   | "audit";
+type AuthScreenKey =
+  | "sign-in"
+  | "sign-up"
+  | "verify-email-otp"
+  | "forgot-password";
+type VerifyEmailBackTarget = "sign-in" | "sign-up";
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -172,6 +184,10 @@ function AppShell(): React.JSX.Element {
   const setScreen = useCallback((next: ScreenKey) => {
     setScreenRaw(next);
   }, []);
+  const [authScreen, setAuthScreen] = useState<AuthScreenKey>("sign-in");
+  const [verificationEmail, setVerificationEmail] = useState("");
+  const [verifyEmailBackTarget, setVerifyEmailBackTarget] =
+    useState<VerifyEmailBackTarget>("sign-up");
   const [selectedPatientId, setSelectedPatientId] = useState<string>("");
   const [selectedSessionId, setSelectedSessionId] = useState<string>("");
   const [copyForwardDraft, setCopyForwardDraft] = useState<null | {
@@ -264,6 +280,9 @@ function AppShell(): React.JSX.Element {
     }
     previousAuthStatus.current = status;
     setScreen("patients");
+    setAuthScreen("sign-in");
+    setVerificationEmail("");
+    setVerifyEmailBackTarget("sign-up");
     setSelectedPatientId("");
     setSelectedSessionId("");
     setCopyForwardDraft(null);
@@ -355,6 +374,25 @@ function AppShell(): React.JSX.Element {
     return () => subscription.remove();
   }, [status, screen, clinicId, exportShareSourceScreen, appointmentDetailBackTarget, newAppointmentBackTarget, noteBackTarget, priorSessionBackTarget, returnFromAudit, startSessionBackTarget, templateEditorBackTarget, voiceCaptureBackTarget]);
 
+  useEffect(() => {
+    if (status !== "unauthenticated") return;
+
+    const backAction = () => {
+      if (authScreen === "sign-up" || authScreen === "forgot-password") {
+        setAuthScreen("sign-in");
+        return true;
+      }
+      if (authScreen === "verify-email-otp") {
+        setAuthScreen(verifyEmailBackTarget);
+        return true;
+      }
+      return false;
+    };
+
+    const subscription = BackHandler.addEventListener("hardwareBackPress", backAction);
+    return () => subscription.remove();
+  }, [authScreen, status, verifyEmailBackTarget]);
+
   if (status === "loading") {
     return (
       <>
@@ -377,13 +415,58 @@ function AppShell(): React.JSX.Element {
             <Text style={styles.appSubtitle}>Secure clinical documentation workspace.</Text>
           </View>
 
-          <View style={styles.authCardStack}>
-            <SignInScreen
-              onSubmit={async (values) => {
-                await signIn(values.email, values.password);
+          {authScreen === "sign-in" ? (
+            <View style={styles.authCardStack}>
+              <SignInScreen
+                onSubmit={async (values) => {
+                  try {
+                    await signIn(values.email, values.password);
+                  } catch (error) {
+                    if (isEmailVerificationRequiredError(error)) {
+                      setVerificationEmail(error.details.email);
+                      setVerifyEmailBackTarget("sign-in");
+                      setAuthScreen("verify-email-otp");
+                      return;
+                    }
+                    throw error;
+                  }
+                }}
+                onForgotPassword={() => setAuthScreen("forgot-password")}
+              />
+              <MeridianButton
+                label="Create Account"
+                variant="secondary"
+                onPress={() => setAuthScreen("sign-up")}
+                testID="signin-create-account-button"
+              />
+            </View>
+          ) : null}
+
+          {authScreen === "sign-up" ? (
+            <SignUpScreen
+              onOtpRequired={(email) => {
+                setVerificationEmail(email);
+                setVerifyEmailBackTarget("sign-up");
+                setAuthScreen("verify-email-otp");
               }}
+              onBackToSignIn={() => setAuthScreen("sign-in")}
             />
-          </View>
+          ) : null}
+
+          {authScreen === "verify-email-otp" ? (
+            <VerifyEmailOtpScreen
+              email={verificationEmail}
+              onVerified={(tokens) => applyTokens(tokens)}
+              onBackToSignup={() => setAuthScreen(verifyEmailBackTarget)}
+            />
+          ) : null}
+
+          {authScreen === "forgot-password" ? (
+            <ForgotPasswordScreen
+              onSuccess={() => setAuthScreen("sign-in")}
+              onBack={() => setAuthScreen("sign-in")}
+            />
+          ) : null}
         </ScrollView>
       </>
     );

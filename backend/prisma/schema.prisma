@@ -7,19 +7,20 @@ datasource db {
 }
 
 model Clinic {
-  id                       String                   @id @default(cuid())
-  name                     String
-  users                    User[]
-  patients                 Patient[]
-  sessions                 Session[]
-  exportRecords            ExportRecord[]
-  progressNotes            ProgressNote[]
+  id        String   @id @default(cuid())
+  name      String
+  users     User[]
+  otpStates OtpState[]
+  patients  Patient[]
+  sessions  Session[]
+  exportRecords ExportRecord[]
+  progressNotes ProgressNote[]
   customTemplateCategories CustomTemplateCategory[]
-  customTemplates          CustomTemplate[]
-  appointments             Appointment[]
-  patientConsents          PatientConsent[]
-  createdAt                DateTime                 @default(now())
-  updatedAt                DateTime                 @updatedAt
+  customTemplates CustomTemplate[]
+  appointments Appointment[]
+  patientConsents PatientConsent[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 }
 
 enum PatientSex {
@@ -30,25 +31,25 @@ enum PatientSex {
 }
 
 model Patient {
-  id              String           @id @default(cuid())
-  clinicId        String
-  clinic          Clinic           @relation(fields: [clinicId], references: [id], onDelete: Restrict)
-  sessions        Session[]
-  progressNotes   ProgressNote[]
-  appointments    Appointment[]
-  exportRecords   ExportRecord[]
+  id            String      @id @default(cuid())
+  clinicId      String
+  clinic        Clinic      @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  sessions      Session[]
+  progressNotes ProgressNote[]
+  appointments  Appointment[]
+  exportRecords ExportRecord[]
   patientConsents PatientConsent[]
-  fullName        String
-  dateOfBirth     DateTime?
-  sex             PatientSex?
-  phone           String?
-  email           String?
-  addressLine     String?
-  clinicalNotes   String?
-  conditionTags   String[]         @default([])
-  archivedAt      DateTime?
-  createdAt       DateTime         @default(now())
-  updatedAt       DateTime         @updatedAt
+  fullName      String
+  dateOfBirth   DateTime?
+  sex           PatientSex?
+  phone         String?
+  email         String?
+  addressLine   String?
+  clinicalNotes String?
+  conditionTags String[]    @default([])
+  archivedAt    DateTime?
+  createdAt     DateTime    @default(now())
+  updatedAt     DateTime    @updatedAt
 
   @@unique([id, clinicId])
   @@index([clinicId])
@@ -65,26 +66,26 @@ enum NoteStatus {
 }
 
 model Session {
-  id                               String         @id @default(cuid())
-  clinicId                         String
-  clinic                           Clinic         @relation(fields: [clinicId], references: [id], onDelete: Restrict)
-  patientId                        String
-  patient                          Patient        @relation(fields: [patientId, clinicId], references: [id, clinicId], onDelete: Restrict)
-  progressNote                     ProgressNote?
-  exportRecords                    ExportRecord[]
-  startedAt                        DateTime
-  visitType                        String
-  noteStatus                       NoteStatus
-  finalNote                        String?
-  patientSummary                   String?
-  priorPlan                        String?
-  carryForwardContext              String?
-  activeTemplateSnapshotLabel      String?
-  activeTemplateSnapshotCategories String[]       @default([])
-  activeTemplateSnapshotSource     String?
-  activeTemplateApplyMode          String?
-  createdAt                        DateTime       @default(now())
-  updatedAt                        DateTime       @updatedAt
+  id                   String     @id @default(cuid())
+  clinicId             String
+  clinic               Clinic     @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patientId            String
+  patient              Patient    @relation(fields: [patientId, clinicId], references: [id, clinicId], onDelete: Restrict)
+  progressNote         ProgressNote?
+  exportRecords        ExportRecord[]
+  startedAt            DateTime
+  visitType            String
+  noteStatus           NoteStatus
+  finalNote            String?
+  patientSummary       String?
+  priorPlan            String?
+  carryForwardContext  String?
+  activeTemplateSnapshotLabel String?
+  activeTemplateSnapshotCategories String[] @default([])
+  activeTemplateSnapshotSource String?
+  activeTemplateApplyMode String?
+  createdAt            DateTime   @default(now())
+  updatedAt            DateTime   @updatedAt
 
   @@unique([id, clinicId])
   @@index([clinicId])
@@ -93,24 +94,24 @@ model Session {
 }
 
 model ProgressNote {
-  id                         String   @id @default(cuid())
-  clinicId                   String
-  clinic                     Clinic   @relation(fields: [clinicId], references: [id], onDelete: Restrict)
-  patientId                  String
-  patient                    Patient  @relation(fields: [patientId, clinicId], references: [id, clinicId], onDelete: Restrict)
-  sessionId                  String   @unique
-  session                    Session  @relation(fields: [sessionId, clinicId], references: [id, clinicId], onDelete: Restrict)
-  subjective                 String?
-  objective                  String?
-  assessment                 String?
-  plan                       String?
-  templateKey                String?
-  templateSnapshotLabel      String?
+  id           String   @id @default(cuid())
+  clinicId     String
+  clinic       Clinic   @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patientId    String
+  patient      Patient  @relation(fields: [patientId, clinicId], references: [id, clinicId], onDelete: Restrict)
+  sessionId    String   @unique
+  session      Session  @relation(fields: [sessionId, clinicId], references: [id, clinicId], onDelete: Restrict)
+  subjective   String?
+  objective    String?
+  assessment   String?
+  plan         String?
+  templateKey  String?
+  templateSnapshotLabel String?
   templateSnapshotCategories String[] @default([])
-  templateSnapshotSource     String?
-  templateApplyMode          String?
-  createdAt                  DateTime @default(now())
-  updatedAt                  DateTime @updatedAt
+  templateSnapshotSource String?
+  templateApplyMode String?
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
 
   @@unique([id, clinicId])
   @@unique([sessionId, clinicId])
@@ -119,15 +120,15 @@ model ProgressNote {
 }
 
 model CustomTemplateCategory {
-  id          String                       @id @default(cuid())
+  id          String   @id @default(cuid())
   clinicId    String
-  clinic      Clinic                       @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  clinic      Clinic   @relation(fields: [clinicId], references: [id], onDelete: Restrict)
   ownerUserId String
-  ownerUser   User                         @relation(fields: [ownerUserId, clinicId], references: [id, clinicId], onDelete: Cascade)
+  ownerUser   User     @relation(fields: [ownerUserId, clinicId], references: [id, clinicId], onDelete: Cascade)
   label       String
   templates   CustomTemplateCategoryLink[]
-  createdAt   DateTime                     @default(now())
-  updatedAt   DateTime                     @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@unique([id, clinicId])
   @@unique([clinicId, ownerUserId, label])
@@ -135,24 +136,24 @@ model CustomTemplateCategory {
 }
 
 model CustomTemplate {
-  id          String                       @id @default(cuid())
+  id          String   @id @default(cuid())
   clinicId    String
-  clinic      Clinic                       @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  clinic      Clinic   @relation(fields: [clinicId], references: [id], onDelete: Restrict)
   ownerUserId String
-  ownerUser   User                         @relation(fields: [ownerUserId, clinicId], references: [id, clinicId], onDelete: Cascade)
+  ownerUser   User     @relation(fields: [ownerUserId, clinicId], references: [id, clinicId], onDelete: Cascade)
   name        String
-  source      String                       @default("custom")
+  source      String   @default("custom")
   subjective  String?
   objective   String?
   assessment  String?
   plan        String?
   categories  CustomTemplateCategoryLink[]
-  createdAt   DateTime                     @default(now())
-  updatedAt   DateTime                     @updatedAt
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   @@unique([id, clinicId])
-  @@unique([clinicId, ownerUserId, name])
   @@index([clinicId, ownerUserId, updatedAt])
+  @@unique([clinicId, ownerUserId, name])
 }
 
 model CustomTemplateCategoryLink {
@@ -180,21 +181,22 @@ enum SyncStatus {
 }
 
 model Appointment {
-  id                  String            @id @default(cuid())
-  clinicId            String
-  clinic              Clinic            @relation(fields: [clinicId], references: [id], onDelete: Restrict)
-  patientId           String?
-  patient             Patient?          @relation(fields: [patientId, clinicId], references: [id, clinicId], onDelete: Restrict)
+  id                String           @id @default(cuid())
+  clinicId          String
+  clinic            Clinic           @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  patientId         String?
+  patient           Patient?         @relation(fields: [patientId, clinicId], references: [id, clinicId], onDelete: Restrict)
   patientNameSnapshot String?
-  scheduledAt         DateTime
-  durationMinutes     Int
-  status              AppointmentStatus
-  linkedSessionId     String?
-  notes               String?
-  syncStatus          SyncStatus        @default(manual)
-  syncedAt            DateTime?
-  createdAt           DateTime          @default(now())
-  updatedAt           DateTime          @updatedAt
+  scheduledAt       DateTime
+  durationMinutes   Int
+  status            AppointmentStatus
+  linkedSessionId   String?
+  notes             String?
+  syncStatus        SyncStatus       @default(manual)
+  syncedAt          DateTime?
+  googleEventId     String?
+  createdAt         DateTime         @default(now())
+  updatedAt         DateTime         @updatedAt
 
   @@unique([id, clinicId])
   @@index([clinicId])
@@ -204,59 +206,109 @@ model Appointment {
 }
 
 model ClinicianNotificationPreference {
-  id                    String   @id @default(cuid())
-  userId                String
-  clinicId              String
-  user                  User     @relation(fields: [userId, clinicId], references: [id, clinicId], onDelete: Cascade)
-  defaultReminderTiming String   @default("30m")
-  pushEnabled           Boolean  @default(true)
-  createdAt             DateTime @default(now())
-  updatedAt             DateTime @updatedAt
+  id                String   @id @default(cuid())
+  userId            String
+  clinicId          String
+  user              User     @relation(fields: [userId, clinicId], references: [id, clinicId], onDelete: Cascade)
+  defaultReminderTiming String @default("30m")
+  pushEnabled       Boolean  @default(true)
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
 
   @@unique([userId, clinicId])
   @@index([clinicId, userId])
 }
 
+model DevicePushToken {
+  id                String              @id @default(cuid())
+  userId            String
+  clinicId          String
+  user              User                @relation(fields: [userId, clinicId], references: [id, clinicId], onDelete: Cascade)
+  expoPushToken     String
+  deviceId          String
+  reminderDispatches ReminderDispatch[]
+  createdAt         DateTime            @default(now())
+  updatedAt         DateTime            @updatedAt
+
+  @@unique([userId, clinicId, deviceId])
+  @@index([clinicId, userId])
+}
+
+model GoogleCalendarConnection {
+  id                String   @id @default(cuid())
+  userId            String
+  clinicId          String
+  user              User     @relation(fields: [userId, clinicId], references: [id, clinicId], onDelete: Cascade)
+  refreshToken      String
+  channelId         String?
+  channelToken      String?
+  channelExpiration DateTime?
+  nextSyncToken     String?
+  lastSyncedAt      DateTime?
+  lastSyncError     String?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@unique([userId, clinicId])
+  @@index([clinicId, userId])
+}
+
+model GoogleCalendarOAuthState {
+  id         String   @id @default(cuid())
+  state      String   @unique
+  userId     String
+  clinicId   String
+  expiresAt  DateTime
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([clinicId, userId])
+  @@index([expiresAt])
+}
+
 model User {
-  id                                 String                            @id @default(cuid())
-  clinicId                           String
-  clinic                             Clinic                            @relation(fields: [clinicId], references: [id], onDelete: Restrict)
-  email                              String                            @unique
-  emailVerified                      Boolean                           @default(false)
+  id            String         @id @default(cuid())
+  clinicId      String
+  clinic        Clinic         @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  email         String         @unique
+  emailVerified Boolean        @default(false)
   dataHandlingAcknowledgementVersion String?
-  dataHandlingAcknowledgedAt         DateTime?
-  passwordHash                       String
-  firstName                          String
-  lastName                           String
-  tokenVersion                       Int                               @default(0)
-  audioRetentionPeriod               String                            @default("30d")
-  refreshTokens                      RefreshToken[]
-  exportRecords                      ExportRecord[]
-  auditEvents                        AuditEvent[]
-  notificationPreferences            ClinicianNotificationPreference[]
-  customTemplateCategories           CustomTemplateCategory[]
-  customTemplates                    CustomTemplate[]
-  createdAt                          DateTime                          @default(now())
-  updatedAt                          DateTime                          @updatedAt
+  dataHandlingAcknowledgedAt DateTime?
+  passwordHash  String
+  firstName     String
+  lastName      String
+  tokenVersion  Int            @default(0)
+  audioRetentionPeriod String  @default("30d")
+  refreshTokens RefreshToken[]
+  otpStates     OtpState[]
+  exportRecords ExportRecord[]
+  auditEvents   AuditEvent[]
+  notificationPreferences ClinicianNotificationPreference[]
+  devicePushTokens DevicePushToken[]
+  googleCalendarConnections GoogleCalendarConnection[]
+  customTemplateCategories CustomTemplateCategory[]
+  customTemplates CustomTemplate[]
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
 
   @@unique([id, clinicId])
   @@index([clinicId])
 }
 
 model RefreshToken {
-  id                String         @id @default(cuid())
+  id                String       @id @default(cuid())
   userId            String
   clinicId          String
-  user              User           @relation(fields: [userId, clinicId], references: [id, clinicId], onDelete: Cascade)
-  tokenHash         String         @unique
-  sessionId         String         @unique
+  user              User         @relation(fields: [userId, clinicId], references: [id, clinicId], onDelete: Cascade)
+  tokenHash         String       @unique
+  sessionId         String       @unique
   expiresAt         DateTime
   revokedAt         DateTime?
   replacedByTokenId String?
-  replacedByToken   RefreshToken?  @relation("RefreshTokenRotation", fields: [replacedByTokenId], references: [id])
+  replacedByToken   RefreshToken? @relation("RefreshTokenRotation", fields: [replacedByTokenId], references: [id])
   previousTokens    RefreshToken[] @relation("RefreshTokenRotation")
-  createdAt         DateTime       @default(now())
-  updatedAt         DateTime       @updatedAt
+  createdAt         DateTime     @default(now())
+  updatedAt         DateTime     @updatedAt
 
   @@index([clinicId, userId])
 }
@@ -318,6 +370,25 @@ model AuditEvent {
   @@index([clinicId, userId])
 }
 
+model OtpState {
+  id        String   @id @default(cuid())
+  userId    String
+  clinicId  String
+  user      User     @relation(fields: [userId, clinicId], references: [id, clinicId], onDelete: Cascade)
+  clinic    Clinic   @relation(fields: [clinicId], references: [id], onDelete: Restrict)
+  email     String
+  codeHash  String
+  expiresAt DateTime
+  attempts  Int      @default(0)
+  resends   Int      @default(0)
+  lastSentAt DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@unique([userId, clinicId])
+  @@index([clinicId, userId])
+}
+
 enum VoiceJobStatus {
   queued
   processing
@@ -326,29 +397,29 @@ enum VoiceJobStatus {
 }
 
 model VoiceJob {
-  id                       String         @id @default(cuid())
-  clinicId                 String
-  patientId                String
-  sessionId                String?
-  uploadId                 String
-  status                   VoiceJobStatus @default(queued)
-  stageState               String         @default("queued_transcription")
-  audioUrl                 String?
-  storageKey               String?
-  durationSeconds          Int?
-  transcriptText           String?
-  soapDraft                String?
-  patientSummary           String?
-  sttProviderRequestId     String?
-  llmProviderRequestId     String?
+  id                     String         @id @default(cuid())
+  clinicId               String
+  patientId              String
+  sessionId              String?
+  uploadId               String
+  status                 VoiceJobStatus @default(queued)
+  stageState             String         @default("queued_transcription")
+  audioUrl               String?
+  storageKey             String?
+  durationSeconds        Int?
+  transcriptText         String?
+  soapDraft              String?
+  patientSummary         String?
+  sttProviderRequestId   String?
+  llmProviderRequestId   String?
   summaryProviderRequestId String?
-  createdAt                DateTime       @default(now())
-  updatedAt                DateTime       @updatedAt
-  completedAt              DateTime?
-  errorMessage             String?
-  attempts                 Int            @default(1)
-  resends                  Int            @default(0)
-  stageRetries             Json?
+  createdAt              DateTime       @default(now())
+  updatedAt              DateTime       @updatedAt
+  completedAt            DateTime?
+  errorMessage           String?
+  attempts               Int            @default(1)
+  resends                Int            @default(0)
+  stageRetries           Json?
 
   @@index([clinicId])
   @@index([clinicId, status])
@@ -365,19 +436,19 @@ enum VoiceUploadStatus {
 }
 
 model VoiceUpload {
-  id                String            @id @default(cuid())
-  clinicId          String
-  patientId         String
-  uploadId          String            @unique
-  storageKey        String
-  mimeType          String
-  fileSizeBytes     Int
-  status            VoiceUploadStatus @default(created)
-  expiresAt         DateTime
-  completedAt       DateTime?
+  id             String            @id @default(cuid())
+  clinicId       String
+  patientId      String
+  uploadId       String            @unique
+  storageKey     String
+  mimeType       String
+  fileSizeBytes  Int
+  status         VoiceUploadStatus @default(created)
+  expiresAt      DateTime
+  completedAt    DateTime?
   providerRequestId String?
-  createdAt         DateTime          @default(now())
-  updatedAt         DateTime          @updatedAt
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
 
   @@index([clinicId, uploadId])
   @@index([clinicId, status])
@@ -400,4 +471,27 @@ model PatientConsent {
 
   @@unique([clinicId, patientId, type, status])
   @@index([clinicId, patientId, type, status])
+}
+
+model ReminderDispatch {
+  id                String   @id @default(cuid())
+  clinicId          String
+  appointmentId     String
+  userId            String
+  patientName       String
+  scheduledAt       DateTime
+  dispatchAt        DateTime
+  status            String   @default("pending")
+  devicePushTokenId String?
+  devicePushToken   DevicePushToken? @relation(fields: [devicePushTokenId], references: [id], onDelete: SetNull)
+  provider          String   @default("expo")
+  ticketId          String?
+  errorMessage      String?
+  dispatchedAt      DateTime?
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  @@index([clinicId, dispatchAt])
+  @@index([clinicId, status])
+  @@index([clinicId, appointmentId])
 }

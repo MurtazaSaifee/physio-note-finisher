@@ -13,8 +13,19 @@ export class InvalidReminderTimingError extends Error {
   }
 }
 
+export class InvalidPushTokenError extends Error {
+  constructor() {
+    super("Invalid push token");
+    this.name = "InvalidPushTokenError";
+  }
+}
+
 function isValidTiming(value: string): value is ReminderTimingOption {
   return VALID_TIMING_OPTIONS.includes(value as ReminderTimingOption);
+}
+
+export function isValidExpoPushToken(token: string): boolean {
+  return token.startsWith("ExponentPushToken[") && token.endsWith("]");
 }
 
 export async function getReminderPreference(input: {
@@ -76,4 +87,58 @@ export async function updateReminderPreference(input: {
     defaultReminderTiming: preference.defaultReminderTiming as ReminderTimingOption,
     pushEnabled: preference.pushEnabled,
   };
+}
+
+export async function registerDevicePushToken(input: {
+  userId: string;
+  clinicId: string;
+  expoPushToken: string;
+  deviceId: string;
+}): Promise<{ id: string; expoPushToken: string; deviceId: string }> {
+  if (!isValidExpoPushToken(input.expoPushToken)) {
+    throw new InvalidPushTokenError();
+  }
+
+  const token = await prisma.devicePushToken.upsert({
+    where: {
+      userId_clinicId_deviceId: {
+        userId: input.userId,
+        clinicId: input.clinicId,
+        deviceId: input.deviceId,
+      },
+    },
+    update: {
+      expoPushToken: input.expoPushToken,
+    },
+    create: {
+      userId: input.userId,
+      clinicId: input.clinicId,
+      expoPushToken: input.expoPushToken,
+      deviceId: input.deviceId,
+    },
+  });
+
+  return {
+    id: token.id,
+    expoPushToken: token.expoPushToken,
+    deviceId: token.deviceId,
+  };
+}
+
+export async function getDevicePushTokens(input: {
+  userId: string;
+  clinicId: string;
+}): Promise<{ id: string; expoPushToken: string; deviceId: string }[]> {
+  const tokens = await prisma.devicePushToken.findMany({
+    where: {
+      userId: input.userId,
+      clinicId: input.clinicId,
+    },
+  });
+
+  return tokens.map((token) => ({
+    id: token.id,
+    expoPushToken: token.expoPushToken,
+    deviceId: token.deviceId,
+  }));
 }

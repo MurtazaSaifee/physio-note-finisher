@@ -282,20 +282,6 @@ async function findVoiceJob(
   return job;
 }
 
-async function updateStatus(
-  store: VoiceJobStore,
-  job: VoiceJobRecord,
-  nextStatus: VoiceJobStatus,
-): Promise<VoiceJobRecord> {
-  const updated: VoiceJobRecord = {
-    ...job,
-    status: nextStatus,
-    updatedAt: nowIso(),
-  };
-  await store.save(updated);
-  return updated;
-}
-
 export function enqueueTranscriptionJob(
   store: VoiceJobStore = defaultStore,
   input: {

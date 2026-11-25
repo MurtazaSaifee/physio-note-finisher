@@ -496,7 +496,6 @@ type ClinicalRecordsSectionProps = {
 
 function ClinicalRecordsSection({
   patientId,
-  clinicId,
   timelineQuery,
   exportRecordsQuery,
   onOpenFinalizedRecord,

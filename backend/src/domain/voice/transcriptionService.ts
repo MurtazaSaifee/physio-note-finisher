@@ -1,6 +1,6 @@
 import type { VoiceTranscriptPayload } from "../../../../shared/contracts/voice.js";
 import type { SttProvider } from "./providers/providerTypes.js";
-import { getObject } from "../../infrastructure/storage/localStorageProvider.js";
+import { getObject } from "../../infrastructure/s3/s3Client.js";
 import {
   getVoiceJobStatus,
   markVoiceJobFailed,
@@ -68,7 +68,7 @@ export async function runTranscription(
       );
     }
 
-    // Download audio from the local storage provider.
+    // Download audio from storage (S3 or local)
     const audioBuffer = await getObject(job.storageKey);
 
     // Call STT provider

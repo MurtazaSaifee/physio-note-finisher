@@ -31,7 +31,7 @@ async function getUniqueClinicIds(store: VoiceJobStore): Promise<string[]> {
 
 export function registerRetentionWorker(
   store: VoiceJobStore,
-  deleteStoredObject?: (keyOrUrl: string) => Promise<void>,
+  s3DeleteObject?: (keyOrUrl: string) => Promise<void>,
 ): RetentionWorker {
   return {
     async runRetentionJob({ clinicId, retentionPeriod }) {
@@ -56,14 +56,14 @@ export function registerRetentionWorker(
             jobId: string;
             clinicId: string;
             store: VoiceJobStore;
-            deleteStoredObject?(keyOrUrl: string): Promise<void>;
+            s3DeleteObject?(keyOrUrl: string): Promise<void>;
           } = {
             jobId: job.jobId,
             clinicId: targetClinicId,
             store,
           };
-          if (deleteStoredObject) {
-            deleteArgs.deleteStoredObject = deleteStoredObject;
+          if (s3DeleteObject) {
+            deleteArgs.s3DeleteObject = s3DeleteObject;
           }
           const result = await deleteAudioAndTranscript(deleteArgs);
           if (result.success) {

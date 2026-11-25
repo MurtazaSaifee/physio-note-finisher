@@ -674,14 +674,8 @@ export function ManualSoapComposerScreen({
     [selectedTemplateKey, templateListQuery.data?.templates],
   );
   const showPatientSetup = !initialPatientId.trim();
-  const cameFromTemplateLibrary = Boolean(initialTemplateKey);
 
   const canEdit = Boolean(selectedPatientId) && noteStatus !== "finalized";
-  const canSave =
-    Boolean(selectedPatientId) &&
-    noteStatus !== "finalized" &&
-    !createManualNote.isPending &&
-    !saveManualNote.isPending;
   const canFinalize =
     Boolean(selectedPatientId) &&
     Boolean(noteSessionId) &&

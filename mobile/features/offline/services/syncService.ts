@@ -2,7 +2,6 @@ import type { QueuedChange, SyncState } from "../../../../shared/contracts/offli
 import type {
   CreateManualNoteRequest,
   SaveManualNoteRequest,
-  SoapSections,
 } from "../../../../shared/contracts/notes";
 import type { UpdateAppointmentRequest } from "../../../../shared/contracts/appointments";
 import {

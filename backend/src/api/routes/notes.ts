@@ -76,6 +76,8 @@ async function authorizeNoteAccess(
   }
 }
 
+
+
 function buildCreateManualNoteInput(
   data: z.infer<typeof createManualNoteSchema>,
 ): CreateManualNoteRequest {
@@ -300,57 +302,6 @@ export function registerNoteRoutes(app: FastifyInstance): void {
         throw error;
       }
     },
-  });
-
-  // Alias endpoint: POST/PUT /api/v1/sessions/:sessionId/progress-note
-  const handleSessionProgressNote = async (request: FastifyRequest, reply: FastifyReply) => {
-    const params = parseOrBadRequest(z.object({ sessionId: z.string().trim().min(1) }), request.params);
-    if (!params.success) {
-      return sendInvalidPayload(reply, "Invalid note payload", params.issues);
-    }
-    const body = parseOrBadRequest(saveManualNoteSchema, request.body);
-    if (!body.success) {
-      return sendInvalidPayload(reply, "Invalid note payload", body.issues);
-    }
-
-    const authenticated = request as AuthenticatedRequest;
-    const session = await prisma.session.findFirst({
-      where: { id: params.data.sessionId, clinicId: authenticated.auth.clinicId },
-      select: { patientId: true },
-    });
-
-    if (!session) {
-      return reply.code(404).send({ error: "Session not found" });
-    }
-
-    try {
-      const data = await noteService.saveManualNote({
-        clinicId: authenticated.auth.clinicId,
-        patientId: session.patientId,
-        sessionId: params.data.sessionId,
-        userId: authenticated.auth.sub,
-        input: buildSaveManualNoteInput(body.data),
-      });
-      return reply.send({ success: true, data });
-    } catch (error) {
-      const response = sendNoteError(reply, error);
-      if (response) return response;
-      throw error;
-    }
-  };
-
-  app.route({
-    method: "POST",
-    url: "/api/v1/sessions/:sessionId/progress-note",
-    preHandler: [authorizeNoteAccess],
-    handler: handleSessionProgressNote,
-  });
-
-  app.route({
-    method: "PUT",
-    url: "/api/v1/sessions/:sessionId/progress-note",
-    preHandler: [authorizeNoteAccess],
-    handler: handleSessionProgressNote,
   });
 
   app.route({
@@ -649,10 +600,10 @@ export function registerNoteRoutes(app: FastifyInstance): void {
       if (!params.success) return sendInvalidPayload(reply, "Invalid note payload", params.issues);
       const authenticated = request as AuthenticatedRequest;
       try {
-        await templateService.deleteTemplateCategory({
+        await templateService.deleteCustomTemplate({
           clinicId: authenticated.auth.clinicId,
           userId: authenticated.auth.sub,
-          categoryId: params.data.templateId,
+          templateId: params.data.templateId,
         });
         return reply.code(204).send();
       } catch (error) {

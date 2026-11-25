@@ -1,17 +1,5 @@
 import { z } from "zod";
 
-const conditionTemplateKeyValues = [
-  "low_back",
-  "neck",
-  "shoulder",
-  "knee",
-  "acl_rehab",
-  "tennis_elbow",
-  "post_op",
-  "balance_gait",
-] as const;
-
-const conditionTemplateKeySchema = z.enum(conditionTemplateKeyValues);
 const templateCategorySchema = z
   .string()
   .trim()

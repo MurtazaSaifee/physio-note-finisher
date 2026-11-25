@@ -132,6 +132,9 @@ function normalizeAppointmentDetail(payload: unknown): AppointmentDetailResponse
     linkedSessionId: requireNullableString(payload.linkedSessionId, "linkedSessionId"),
     reminderText: requireString(payload.reminderText, "reminderText"),
     notes: requireNullableString(payload.notes, "notes"),
+    syncStatus: requireSyncStatus(payload.syncStatus, "syncStatus"),
+    syncedAt: requireNullableString(payload.syncedAt, "syncedAt"),
+    googleEventId: requireNullableString(payload.googleEventId, "googleEventId"),
     createdAt: requireString(payload.createdAt, "createdAt"),
     updatedAt: requireString(payload.updatedAt, "updatedAt"),
   };

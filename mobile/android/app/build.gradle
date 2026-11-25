@@ -133,9 +133,9 @@ android {
     buildToolsVersion rootProject.ext.buildToolsVersion
     compileSdk rootProject.ext.compileSdkVersion
 
-    namespace 'com.anonymous.physionotefinisher'
+    namespace 'com.murtazasaifee.physionotefinisher'
     defaultConfig {
-        applicationId 'com.anonymous.physionotefinisher'
+        applicationId 'com.murtazasaifee.physionotefinisher'
         minSdkVersion rootProject.ext.minSdkVersion
         targetSdkVersion rootProject.ext.targetSdkVersion
         versionCode 1

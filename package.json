@@ -2,25 +2,23 @@
   "name": "physio-note-finisher",
   "version": "0.1.0",
   "private": true,
-  "type": "module",
   "main": "mobile/index.js",
   "dependencies": {
     "expo-asset": "~55.0.18",
     "expo-status-bar": "~55.0.6",
     "react": "19.2.0",
-    "react-native": "0.83.6",
+    "react-native": "0.83.10",
     "react-native-svg": "15.15.3"
   },
   "devDependencies": {
-    "@eslint/js": "^10.0.1",
+    "@eslint/js": "^9.39.5",
     "@types/react": "~19.2.10",
-    "ajv": "8.18.0",
-    "ajv-formats": "3.0.1",
-    "eslint": "^10.7.0",
-    "js-yaml": "3.15.0",
+    "eslint": "^9.39.5",
+    "eslint-plugin-react-hooks": "^5.2.0",
+    "globals": "^17.14.0",
     "react-test-renderer": "19.2.0",
-    "typescript-eslint": "^8.65.0",
-    "vitest": "^4.1.10"
+    "typescript-eslint": "^8.74.0",
+    "vitest": "^4.1.12"
   },
   "workspaces": [
     "mobile",
@@ -28,33 +26,34 @@
     "shared"
   ],
   "scripts": {
-    "local:setup": "node scripts/local-setup.cjs",
-    "db:reset": "docker compose down -v && npm run local:setup",
+    "setup": "node scripts/local-setup.cjs",
+    "db:setup": "node scripts/local-setup.cjs",
+    "db:reset": "docker compose down -v && node scripts/local-setup.cjs",
     "dev": "npm --workspace backend run dev",
     "android": "npm --workspace mobile run android",
-    "verify": "npm run verify:local",
-    "lint": "node -e 'const fs=require(\"fs\");const cp=require(\"child_process\");for(const ws of [\"mobile\",\"backend\",\"shared\"]){if(fs.existsSync(ws+\"/package.json\")){cp.execSync(\"npm --workspace \"+ws+\" run lint --if-present\",{stdio:\"inherit\"});}}'",
+    "lint": "eslint .",
     "test:ci:backend": "node -e 'const cp=require(\"child_process\");const env={...process.env};delete env.DATABASE_URL;cp.execSync(\"npm --workspace backend test\",{stdio:\"inherit\",env});'",
     "typecheck": "node -e 'const fs=require(\"fs\");const cp=require(\"child_process\");for(const ws of [\"mobile\",\"backend\",\"shared\"]){if(fs.existsSync(ws+\"/package.json\")){cp.execSync(\"npm --workspace \"+ws+\" run typecheck --if-present\",{stdio:\"inherit\"});}}'",
     "test": "node -e 'const fs=require(\"fs\");const cp=require(\"child_process\");for(const ws of [\"mobile\",\"backend\",\"shared\"]){if(fs.existsSync(ws+\"/package.json\")){cp.execSync(\"npm --workspace \"+ws+\" run test --if-present\",{stdio:\"inherit\"});}}'",
+    "react-doctor": "node scripts/react-doctor.cjs",
+    "demo": "bash scripts/emulator-dev-up.sh",
+    "demo:seed": "bash scripts/seed-demo-data.sh",
+    "demo:stop": "bash scripts/emulator-dev-down.sh",
     "verify:local": "node scripts/verify-local.cjs",
-    "doctor": "npx expo-doctor mobile",
-    "e2e:android:local": "$HOME/.maestro/bin/maestro test -e APP_ID=${APP_ID:-com.anonymous.physionotefinisher.debug} -e LOGIN_EMAIL=${LOGIN_EMAIL:-clinician@example.com} -e LOGIN_PASSWORD=${LOGIN_PASSWORD:-password123} mobile/.maestro/local/regression.yml"
+    "doctor": "node scripts/local-doctor.cjs all",
+    "doctor:prisma": "node scripts/local-doctor.cjs prisma",
+    "doctor:android": "node scripts/local-doctor.cjs android",
+    "e2e:android:local": "maestro test -e APP_ID=${APP_ID:-com.murtazasaifee.physionotefinisher.debug} -e LOGIN_EMAIL=${LOGIN_EMAIL:-clinician@example.com} -e LOGIN_PASSWORD=${LOGIN_PASSWORD:-password123} mobile/.maestro/local/regression.yml",
+    "audit:gate": "node scripts/audit-gate.cjs",
+    "api:tour": "bash scripts/api-tour.sh"
   },
   "overrides": {
     "@babel/core": "7.29.7",
-    "minimatch@3.1.5": {
-      "brace-expansion": "1.1.16"
-    },
-    "minimatch@10.2.5": {
-      "brace-expansion": "5.0.7"
-    },
-    "esbuild": "0.28.1",
+    "fast-uri": "3.1.9",
     "hono": "4.12.30",
-    "js-yaml": "3.15.0",
-    "uuid": "11.1.1",
+    "js-yaml": "3.15.2",
     "qs": "6.15.3",
-    "shell-quote": "1.10.0",
+    "shell-quote": "1.12.0",
     "@react-native/dev-middleware": {
       "ws": "7.5.11"
     },
@@ -66,9 +65,10 @@
     },
     "react-native": {
       "ws": "7.5.11"
-    }
+    },
+    "effect": "3.22.5"
   },
   "engines": {
-    "node": ">=20.0.0"
+    "node": ">=20.19.0"
   }
 }

@@ -13,7 +13,7 @@ export type RetentionScheduler = {
 type StartRetentionSchedulerOptions = {
   intervalMs?: number;
   store?: VoiceJobStore;
-  deleteStoredObject?(keyOrUrl: string): Promise<void>;
+  s3DeleteObject?(keyOrUrl: string): Promise<void>;
   resolveRetentionPeriod?(clinicId: string): Promise<RetentionPeriod | undefined>;
 };
 
@@ -24,7 +24,7 @@ export function startRetentionScheduler(
 ): RetentionScheduler {
   const intervalMs = options.intervalMs ?? DEFAULT_INTERVAL_MS;
   const store = options.store ?? defaultStore;
-  const deleteStoredObject = options.deleteStoredObject;
+  const s3DeleteObject = options.s3DeleteObject;
   const resolveRetentionPeriod = options.resolveRetentionPeriod;
 
   logger.info("retention.scheduler.started", {
@@ -40,7 +40,7 @@ export function startRetentionScheduler(
     }
     isRunning = true;
     try {
-      const worker = registerRetentionWorker(store, deleteStoredObject);
+      const worker = registerRetentionWorker(store, s3DeleteObject);
       const clinicIds = new Set<string>();
       const jobs = await store.findAll();
       for (const job of jobs) {

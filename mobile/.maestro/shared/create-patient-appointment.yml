@@ -1,91 +1,43 @@
 appId: ${APP_ID}
 ---
+# New patient -> schedule a visit -> open the appointment -> start the session.
 - runFlow:
     label: Sign in
-    file: ../shared/signin.yml
+    file: signin.yml
+- evalScript: ${output.patientName = 'Maestro ' + String(Date.now()).slice(-6)}
 - tapOn:
-    id: bottom-nav-patients
-- scrollUntilVisible:
-    element:
-      id: patient-list-fullname-input
-    direction: DOWN
-    timeout: 20000
-- assertVisible:
-    id: patient-list-fullname-input
-- evalScript: ${output.patientName = 'Maestro Patient ' + Date.now() + '-' + Math.floor(Math.random() * 1000)}
+    id: patient-list-add-patient-button
 - tapOn:
-    id: patient-list-fullname-input
+    id: new-patient-fullname-input
 - inputText: ${output.patientName}
-- back
+- tapOn:
+    id: new-patient-phone-input
+- inputText: '+91 90000 20001'
+- tapOn:
+    id: new-patient-save-button
+- extendedWaitUntil:
+    visible:
+      id: patient-profile-new-session-button
+    timeout: 20000
+- assertVisible: ${output.patientName}
 - scrollUntilVisible:
     element:
-      id: patient-list-phone-input
+      id: patient-profile-create-appointment-row
     direction: DOWN
     timeout: 20000
 - tapOn:
-    id: patient-list-phone-input
-- inputText: 555-0100
-- scrollUntilVisible:
-    element:
-      id: patient-list-create-patient-button
-    direction: DOWN
-    timeout: 20000
+    id: patient-profile-create-appointment-row
 - tapOn:
-    id: patient-list-create-patient-button
-- scrollUntilVisible:
-    element:
-      id: patient-list-search-input
-    direction: UP
-    timeout: 20000
-- longPressOn:
-    id: patient-list-search-input
-- eraseText: 100
-- inputText: ${output.patientName}
-- tapOn: Search
-- assertVisible:
-    id: patient-list-patient-0-card
-- tapOn:
-    id: patient-list-patient-0-card
-- assertVisible:
-    id: patient-profile-create-appointment-button
-- tapOn:
-    id: patient-profile-create-appointment-button
-- assertVisible:
-    id: new-appointment-create-button
-- tapOn:
-    id: new-appointment-notes-input
-- inputText: Follow-up
-- tapOn: New Appointment
-- scrollUntilVisible:
-    element:
-      id: new-appointment-create-button
-    direction: DOWN
-    timeout: 20000
+    id: new-appointment-duration-30-chip
 - tapOn:
     id: new-appointment-create-button
-- assertVisible:
-    id: appointment-detail-start-session-button
-- tapOn:
-    id: appointment-detail-copy-clipboard-button
-    optional: true
-- tapOn:
-    id: appointment-detail-start-session-button
-- scrollUntilVisible:
-    element:
-      id: note-save-draft-button
-    direction: DOWN
+- extendedWaitUntil:
+    visible:
+      id: appointment-detail-start-session-button
     timeout: 20000
-- assertVisible:
-    id: note-save-draft-button
 - tapOn:
-    id: note-save-draft-button
-- scrollUntilVisible:
-    element:
-      text: Draft saved.
-    direction: UP
-    timeout: 20000
-- assertVisible: Draft saved.
-- tapOn:
-    id: bottom-nav-sessions
+    id: appointment-detail-start-session-button
 - assertVisible:
-    id: dashboard-search-input
+    id: start-session-voice-recap-button
+- assertVisible:
+    id: start-session-write-manually-button
